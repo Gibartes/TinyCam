@@ -47,7 +47,8 @@ public class TinyCamConfig
     // QSV 고정 퀄리티(AV1/VP9)
     public int GlobalQuality { get; set; } = 28;
 
-    // H.264_QSV 비트레이트(kbps)
+    // H.264_QSV 비트레이트(kbps) K
+    public bool UseBitrate { get; set; } = false;
     public int BitrateKbps { get; set; } = 3000;
     public int MaxrateKbps { get; set; } = 3000;
     public int BufsizeKbps { get; set; } = 6000;

@@ -201,26 +201,27 @@ public class FFmpegMuxer
     {
         var g = _cfg.Gop > 0 ? $" -g {_cfg.Gop}" : "";
         var kmin = (_cfg.KeyintMin is > 0) ? $" -keyint_min {_cfg.KeyintMin}" : "";
+        var bitrate = $"-b:v {_cfg.BitrateKbps}k -maxrate {_cfg.MaxrateKbps}k -bufsize {_cfg.BufsizeKbps}k";
 
         if (_cfg.Encoder == Encoder.qsv)
         {
             switch (_cfg.VideoCodec)
             {
                 case Codec.vp9:
-                    return $"-c:v vp9_qsv -global_quality {_cfg.GlobalQuality} " + $"{(_cfg.UseLowPower ? "-low_power 1 " : "")}" + g + kmin;
+                    return $"-c:v vp9_qsv -global_quality {_cfg.GlobalQuality} {(_cfg.UseLowPower ? "-low_power 1 " : "")} {(_cfg.UseBitrate ? bitrate : "")} " + g + kmin;
                 case Codec.av1:
-                    return $"-c:v av1_qsv -global_quality {_cfg.GlobalQuality} " + $"{(_cfg.UseLowPower ? "-low_power 1 " : "")}" + g + kmin;
+                    return $"-c:v av1_qsv -global_quality {_cfg.GlobalQuality} {(_cfg.UseLowPower ? "-low_power 1 " : "")} {(_cfg.UseBitrate ? bitrate : "")} " + g + kmin;
                 case Codec.h265:
-                    return $"-c:v hevc_qsv {(_cfg.UseLowPower ? " -low_power 1" : "")} " + $" -b:v {_cfg.BitrateKbps}k -maxrate {_cfg.MaxrateKbps}k -bufsize {_cfg.BufsizeKbps}k" + g + kmin;
+                    return $"-c:v hevc_qsv {(_cfg.UseLowPower ? " -low_power 1" : "")} -rc_mode qvbr -global_quality {_cfg.GlobalQuality} {(_cfg.UseBitrate ? bitrate : "")} " + g + kmin;
                 case Codec.h264:
                 default:
-                    return $"-c:v h264_qsv {(_cfg.UseLowPower ? "-low_power 1 " : "")} " + $" -b:v {_cfg.BitrateKbps}k -maxrate {_cfg.MaxrateKbps}k -bufsize {_cfg.BufsizeKbps}k " + g + kmin;
+                    return $"-c:v h264_qsv {(_cfg.UseLowPower ? "-low_power 1 " : "")} -rc_mode qvbr -global_quality {_cfg.GlobalQuality} {(_cfg.UseBitrate ? bitrate : "")} " + g + kmin;
             }
         }
         else if (_cfg.Encoder == Encoder.nvenc)
         {
             string tuneLL = _cfg.PipeLive ? " -tune ll" : "";
-            string RcVbr(string codec) => $"-c:v {codec} -preset {_cfg.NvencPreset}{tuneLL} -rc vbr -b:v {_cfg.BitrateKbps}k -maxrate {_cfg.MaxrateKbps}k -bufsize {_cfg.BufsizeKbps}k{g}{kmin}";
+            string RcVbr(string codec) => $"-c:v {codec} -preset {_cfg.NvencPreset}{tuneLL} -rc vbr {(_cfg.UseBitrate ? bitrate : "")} {g}{kmin}";
 
             switch (_cfg.VideoCodec)
             {

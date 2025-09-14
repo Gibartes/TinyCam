@@ -114,7 +114,7 @@ Server listens on `http://0.0.0.0:8080` by default.
 
 ```json
 {
-  "platform": "auto",                // "windows" | "linux" | "auto"
+  "platform": "auto",                // "windows" | "linux" | "auto" ( Currently only windows supported )
   "device": "video=\"@device_pnp_\\?\\...\\global\"", // Windows dshow (Alternative name recommended) or "/dev/video0"
   "audioDevice": "",                 // Optional (Windows dshow)
   "enableAudio": false,
@@ -123,7 +123,7 @@ Server listens on `http://0.0.0.0:8080` by default.
   "height": 720,
   "fps": 30,
 
-  "videoCodec": "h264",              // "h264" | "h265"|"hevc" | "av1" | "vp9"
+  "videoCodec": "vp9",               // "h264" | "h265"| "av1" | "vp9" (Recommed : vp9/qsv )
   "encoder": "qsv",                  // "qsv" | "nvenc" | "cpu"
   "useLowPower": true,               // QSV/NVENC low-power if available
   "globalQuality": 28,               // CRF/ICQ quality for qsv/av1/vp9/cpu
@@ -171,6 +171,29 @@ Server listens on `http://0.0.0.0:8080` by default.
   }
 }
 ```
+
+---
+
+### Recommended options (storage-size friendly)
+
+If disk usage is a concern, prefer **hardware-accelerated** codecs:
+
+- **Intel QSV + VP9** (`encoder: qsv`, `videoCodec: vp9`)
+  - Good compression, **great browser compatibility** (WebM).
+  - Smooth for long live streams (low CPU on iGPU).
+
+If you must use CPU encoders, reduce **resolution/FPS** or raise **CRF/global_quality** (e.g., VP9 `globalQuality: 32~36`, H.264 CRF 24~28).
+
+### VP9 vs H.265 (HEVC) compression
+
+- At the **same visual quality**, HEVC typically compresses **slightly better** than VP9 (often within **~5–15%** bitrate difference), but it varies by content, encoder, and settings.
+- **VP9 advantages:** widely playable in browsers (WebM), solid quality per bit, mature tooling.
+- **HEVC advantages:** marginally better compression in many cases, broad support in native players/OS apps; but **web compatibility** can be trickier.
+- **Practical tip:**  
+  - For **web streaming & compatibility** → **VP9** (WebM).  
+  - For **archival / smallest files** with supported players → **HEVC**.
+
+---
 
 **Notes**
 
