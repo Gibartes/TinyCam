@@ -160,9 +160,9 @@ class TinyCamClient:
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.get(f"{self.http_base}/device",
                                  headers={"X-TinyCam-Auth": sig})
-            print(r.status_code, r.text)
+            return (r.status_code, r.text)
 
-    # ───────── Streaming (수신/복호화) ─────────
+    # ───────── Streaming ─────────
     async def iter_plain_chunks(self) -> AsyncIterator[bytes]:
         """
         TinyCam WS에 연결해 **복호화된 비디오 바이트**를 yield.
@@ -187,7 +187,7 @@ class TinyCamClient:
             close_timeout=10,
             open_timeout=self.ws_timeout,
         ) as ws:
-            # 2) hello 수신
+            # 2) hello
             hello_msg = await ws.recv()
             if isinstance(hello_msg, bytes):
                 raise RuntimeError("expected hello text frame, got binary")
@@ -206,7 +206,7 @@ class TinyCamClient:
             if exp_srv != exp:
                 self.log.warning("server exp mismatch: %s != %s", exp_srv, exp)
 
-            # 3) 세션키/HKDF + AAD
+            # 3) Session key/HKDF + AAD
             salt = client_nonce + server_nonce
             info = b"tinycam hkdf v1"
             session_key = hkdf_sha256(ikm=access_key, salt=salt, info=info, length=32)
@@ -285,12 +285,17 @@ async def main_async(args):
     )
 
     if args.device:
-        await client.get_devices()
+        print(await client.get_devices())
         return
     if args.start:
         await client.start_server(force=True)
+        return
+    if args.stop:
+        await client.stop_server(force=True)
+        return
     if args.apply:
         await client.apply_config()
+        return
 
     backoff = 1.0
     while True:
@@ -321,6 +326,8 @@ def parse_args():
                    help="codec hint if server hello lacks codec (default: %(default)s)")
     p.add_argument("--start", action="store_true",
                    help="call /start before streaming (requires managementKey)")
+    p.add_argument("--stop", action="store_true",
+                   help="call /stop after streaming (requires managementKey)")
     p.add_argument("--apply", action="store_true",
                    help="call /apply-config before streaming (requires managementKey)")
     p.add_argument("--debug", action="store_true",

@@ -41,7 +41,7 @@ It captures video from a local camera, **hardware-encodes** it (Intel QSV / NVID
   * **Live pipe** for WebSocket clients (WebM / fMP4 / MKV)
 * **Web control**
 
-  * `/start`, `/stop`, `/apply-config`, `/update_key`, `/stream`, `/devices`
+  * `/start`, `/stop`, `/apply-config`, `/update_key`, `/stream`, `/device`
 * **Security**
 
   * HMAC (management key) for control endpoints
@@ -234,7 +234,7 @@ Here’s a README section you can drop in:
 
 On Windows (DirectShow), TinyCam works best when you set the camera by its **Alternative name** (the stable PnP path that starts with `@device_pnp_…`). After detecting the device, **copy the Alternative name** into your `config.yaml`’s `device` field.
 
-### Option A: Use TinyCam’s `/devices` endpoint
+### Option A: Use TinyCam’s `/device` endpoint
 
 ```bash
 # TinyCam must be running
@@ -334,7 +334,7 @@ Rotates access key at runtime.
 { "accessKey": "BASE64_32_BYTES" }
 ```
 
-### `GET /devices`
+### `GET /device`
 
 Lists capture devices (Windows: **dshow** friendly & alternative names; Linux: `/dev/video*` + v4l2 capabilities).
 
