@@ -41,7 +41,7 @@ It captures video from a local camera, **hardware-encodes** it (Intel QSV / NVID
   * **Live pipe** for WebSocket clients (WebM / fMP4 / MKV)
 * **Web control**
 
-  * `/start`, `/stop`, `/apply-config`, `/update_key`, `/stream`, `/device`
+  * `/start`, `/stop`, `/apply-config`, `/update-key`, `/stream`, `/device`
 * **Security**
 
   * HMAC (management key) for control endpoints
@@ -108,7 +108,7 @@ Server listens on `http://0.0.0.0:8080` by default.
 
 ---
 
-## Configuration (`config.json`)
+## Configuration (`config.yaml`)
 
 > Place next to the binary or point via `TINY_CAM_CONFIG`.
 
@@ -293,7 +293,7 @@ Friendly names can change (or be ambiguous) across reboots/ports. The PnP **Alte
 ```
 
 * Use **random 32-byte** values (Base64).
-* Rotate access key via `/update_key`.
+* Rotate access key via `/update-key`.
 
 ---
 

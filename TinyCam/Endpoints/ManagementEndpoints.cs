@@ -94,7 +94,7 @@ public static class ManagementEndpoints
             }
         });
 
-        app.MapPost("/update_key", async (HttpContext ctx, KeyStore ks) =>
+        app.MapPost("/update-key", async (HttpContext ctx, KeyStore ks) =>
         {
             try
             {
