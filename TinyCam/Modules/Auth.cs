@@ -57,7 +57,7 @@ public static class Auth
     {
         try
         {
-            var sig = ctx.Request.Headers["X-TinyCam-Auth"].ToString();
+            var sig = ctx.Request.Headers["Authorization"].ToString();
             if (string.IsNullOrEmpty(sig)) return false;
             using var sr = new StreamReader(ctx.Request.Body, Encoding.UTF8, leaveOpen: true);
             var body = await sr.ReadToEndAsync();

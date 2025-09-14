@@ -19,6 +19,10 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
 # ──────────────────────────────── Utility ────────────────────────────────
+
+def gen_ts(skew_sec: int = 0) -> int:
+    return int(time.time()) + int(skew_sec)
+
 def safe_b64decode(s: str) -> bytes:
     if not isinstance(s, str):
         raise TypeError("base64 input must be str")
@@ -108,12 +112,12 @@ class TinyCamClient:
         if not self.keys.management_key_b64:
             self.log.warning("managementKey not set; skip /start")
             return (0, "skip")
-        body = {"force": bool(force), "ts":str(time.ctime())}
+        body = {"force": bool(force), "ts":gen_ts()}
         sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.post(
                 f"{self.http_base}/start",
-                headers={"X-TinyCam-Auth": sig, "Content-Type": "application/json"},
+                headers={"Authorization": sig, "Content-Type": "application/json"},
                 content=json.dumps(body),
             )
             self.log.info("[/start] %s %s", r.status_code, r.text)
@@ -123,12 +127,12 @@ class TinyCamClient:
         if not self.keys.management_key_b64:
             self.log.warning("managementKey not set; skip /stop")
             return (0, "skip")
-        body = {"force": bool(force), "ts":str(time.ctime())}
+        body = {"force": bool(force), "ts":gen_ts()}
         sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.post(
                 f"{self.http_base}/stop",
-                headers={"X-TinyCam-Auth": sig, "Content-Type": "application/json"},
+                headers={"Authorization": sig, "Content-Type": "application/json"},
                 content=json.dumps(body),
             )
             self.log.info("[/stop] %s %s", r.status_code, r.text)
@@ -138,12 +142,12 @@ class TinyCamClient:
         if not self.keys.management_key_b64:
             self.log.warning("managementKey not set; skip /apply-config")
             return (0, "skip")
-        sig = hmac_b64(json.dumps({"force": True, "ts":str(time.ctime())}), self.keys.management_key_b64)
+        sig = hmac_b64(json.dumps({"force": True, "ts":gen_ts()}), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0) as client:
             try:
                 r = await client.post(
                     f"{self.http_base}/apply-config",
-                    headers={"X-TinyCam-Auth": sig, "Content-Type": "application/json"},
+                    headers={"Authorization": sig, "Content-Type": "application/json"},
                     content=json.dumps({"force": True}),
                 )
                 self.log.info("[/apply-config POST] %s %s", r.status_code, r.text)
@@ -159,7 +163,7 @@ class TinyCamClient:
         sig = hmac_b64("", self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.get(f"{self.http_base}/device",
-                                 headers={"X-TinyCam-Auth": sig})
+                                 headers={"Authorization": sig})
             return (r.status_code, r.text)
 
     # ───────── Streaming ─────────
@@ -206,14 +210,14 @@ class TinyCamClient:
             if exp_srv != exp:
                 self.log.warning("server exp mismatch: %s != %s", exp_srv, exp)
 
-            # 3) Session key/HKDF + AAD
+            # 3)
             salt = client_nonce + server_nonce
             info = b"tinycam hkdf v1"
             session_key = hkdf_sha256(ikm=access_key, salt=salt, info=info, length=32)
             aesgcm = AESGCM(session_key)
             aad = f"{conn_b64}|{exp}|{codec}|{w}x{h}|{fps}".encode("utf-8")
 
-            # 4) 수신 루프 (복호화만)
+            # 4)
             last_counter = 0
             while True:
                 msg = await ws.recv()
@@ -243,7 +247,7 @@ class TinyCamClient:
                     self.log.error("decrypt error: %s", e)
                     raise
 
-                yield plain  # ← 파일 쓰기 없이 복호화된 데이터만 제공
+                yield plain
 
     # ───────── 파일 저장 도우미 (쓰기 분리) ─────────
     async def stream_to_file(self, out_path: Optional[str] = None) -> None:
