@@ -18,6 +18,7 @@ gop: 60               # -g
 keyintMin: 60         # -keyint_min (optional)
 
 # h264_qsv-only bitrates (kbps)
+useBitrate: false
 bitrateKbps: 3000
 maxrateKbps: 3000
 bufsizeKbps: 6000

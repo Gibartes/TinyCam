@@ -112,64 +112,86 @@ Server listens on `http://0.0.0.0:8080` by default.
 
 > Place next to the binary or point via `TINY_CAM_CONFIG`.
 
-```json
-{
-  "platform": "auto",                // "windows" | "linux" | "auto" ( Currently only windows supported )
-  "device": "video=\"@device_pnp_\\?\\...\\global\"", // Windows dshow (Alternative name recommended) or "/dev/video0"
-  "audioDevice": "",                 // Optional (Windows dshow)
-  "enableAudio": false,
+```yaml
+# TinyCam config.yaml
 
-  "width": 1280,
-  "height": 720,
-  "fps": 30,
+# ── Basics ────────────────────────────────────────────────────────────────
+platform: auto
+device: '@device_pnp_\\?\usb#vid_045e&pid_0812&mi_00#6&151e9577&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global'
+width: 1280
+height: 720
+fps: 30
+ffmpegPath: C:/ffmpeg/ffmpeg.exe
+ffmpegDebug: false
 
-  "videoCodec": "vp9",               // "h264" | "h265"| "av1" | "vp9" (Recommed : vp9/qsv )
-  "encoder": "qsv",                  // "qsv" | "nvenc" | "cpu"
-  "useLowPower": true,               // QSV/NVENC low-power if available
-  "globalQuality": 28,               // CRF/ICQ quality for qsv/av1/vp9/cpu
-  "bitrateKbps": 4000,               // used by h264_qsv/nvenc VBR
-  "maxrateKbps": 6000,
-  "bufsizeKbps": 8000,
-  "gop": 60,
-  "keyintMin": 30,
+# ── Encoding (lightweight first: h264_qsv recommended) ───────────────────
+# codec: h264 | vp9 | av1
+encoder: qsv          # qsv (Intel QSV), nvenc (NVIDIA GPU), cpu
+videoCodec: vp9       # vp9 av1 h264 h265
+useLowPower: true
+gop: 60               # -g
+keyintMin: 60         # -keyint_min (optional)
 
-  "outputDir": "recordings",
-  "segmentUnit": "hour",             // "second" | "hour" | "day"
-  "segmentSeconds": 3600,            // if "second" or "hour", actual seconds
-  "fileNamePattern": "camera_%Y-%m-%d_%H-%M-%S",
+# h264_qsv-only bitrates (kbps)
+useBitrate: false
+bitrateKbps: 3000
+maxrateKbps: 3000
+bufsizeKbps: 6000
 
-  "segmentFormat": "auto",           // auto(h264→mp4, others→webm) or "mp4"|"webm"|"matroska"
-  "pipeFormat": "auto",              // auto(h264→mp4 for browser / mkv for native, impl-dependent)
-  "pipeLive": true,                  // live tuning for webm
-  "clusterTimeLimitMs": 1000,
-  "clusterSizeLimitBytes": 1048576,
+# AV1 / VP9 constant quality (lower = higher quality)
+globalQuality: 28
 
-  "streamOnly": false,               // true: no local files (pipe-only streaming)
+# ── Output / Segments / Filenames ────────────────────────────────────────
+outputDir: 'C:/Recordings'     # Pre-create recommended (path without spaces)
+segmentUnit: second            # second | hour
+segmentSeconds: 60             # if 'second' → seconds, if 'hour' → hours
+fileNamePattern: 'camera_%Y-%m-%dT%H-%M-%S'
+streamOnly: false
 
-  "useWallclockTimestamps": false,
-  "rtbufSize": "512M",
-  "threadQueueSize": 1024,
-  "extraInputArgs": "",
-  "extraEncoderArgs": "",
-  "extraOutputArgs": "",
+# Container auto/forced
+# - auto: h264 -> mp4 (files) & mkv (pipe),  av1/vp9 -> webm (files/pipe)
+segmentFormat: auto            # auto | webm | mp4 | matroska
+pipeFormat: auto               # auto | webm | mp4 | matroska
+pipeLive: true                 # apply live tuning when pipe is webm
+clusterTimeLimitMs: 1000       # webm live cluster time
+clusterSizeLimitBytes: 1048576 # webm live cluster size (1MB)
 
-  "ffmpegPath": "ffmpeg",
-  "ffmpegDebug": false,
+# ── Input stabilization (common for dshow/v4l2) ──────────────────────────
+rtbufSize: '512M'
+threadQueueSize: 1024
+useWallclockTimestamps: true
 
-  "useFileRotation": true,
-  "retainMaxFiles": 60,
-  "retentionSweepSeconds": 60,
-  "retainSafeWindowSeconds": 15,
-  "retainFilePrefix": "camera_",
-  "retainExtensions": ["mp4","webm","mkv"],
+# ── Encrypted storage ────────────────────────────────────────────────────
+saveEncryptedConfig: false
+isEncrypted: false
+cipher:
 
-  "logging": {
-    "mode": "stdout",                // "none" | "stdout" | "file"
-    "filePath": "logs/tinycam.log",
-    "maxSizeMB": 10,
-    "maxFiles": 5
-  }
-}
+# ── Extra ffmpeg arguments ───────────────────────────────────────────────
+extraInputArgs:
+extraEncoderArgs:
+extraOutputArgs:
+
+# ── Audio ────────────────────────────────────────────────────────────────
+enableAudio: false
+audioDevice: 'Microphone (USB Camera XYZ)'  # full dshow device name
+audioCodec: auto          # auto|aac|libopus|copy
+audioBitrateKbps: 96
+audioSampleRate: 48000
+audioChannels: 2
+
+# ── File management ──────────────────────────────────────────────────────
+useFileRotation: true        # enable file rotation
+retentionSweepSeconds: 30    # rotation sweep interval (seconds)
+retainSafeWindowSeconds: 60
+retainMaxFiles: 2
+retainFilePrefix: "camera_"  # prefix of files to keep/clean (default: "camera_")
+
+# ── System logging ───────────────────────────────────────────────────────
+LogMode: stdout
+LogMaxSizeMB: 1
+LogMaxFiles: 2
+LogRollDaily: false
+
 ```
 
 ---
