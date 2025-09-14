@@ -322,11 +322,11 @@ curl -X POST http://127.0.0.1:8080/start \
 
 Gracefully stops ffmpeg; ensures last MP4/WebM segment is playable.
 
-### `GET|POST /apply-config`
+### `POST /apply-config`
 
 Reloads `config.json` and restarts the muxer.
 
-### `POST /update_key`
+### `POST /update-key`
 
 Rotates access key at runtime.
 
