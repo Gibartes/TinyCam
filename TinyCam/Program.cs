@@ -1,4 +1,5 @@
-﻿using TinyCam.Data;
+﻿using Microsoft.Extensions.Logging;
+using TinyCam.Data;
 using TinyCam.Endpoints;
 using TinyCam.Logging;
 using TinyCam.Models;
@@ -6,14 +7,16 @@ using TinyCam.Platform;
 using TinyCam.Services;
 using TinyCam.Services.Devices;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 var configPath = Environment.GetEnvironmentVariable("TINY_CAM_CONFIG") ?? "config.yaml";
 var keyPath    = Environment.GetEnvironmentVariable("TINY_CAM_KEYS") ?? "keys.json";
 var ks         = new KeyStore(keyPath);
 var cfg        = TinyCamConfig.Load(configPath, ks);
+
 builder.Logging.ClearProviders();
+
+SslConfigurator.ConfigureFromConfiguration(builder.WebHost, builder.Configuration, cfg);
 
 switch ((cfg.LogMode ?? "stdout").ToLowerInvariant())
 {
@@ -67,8 +70,8 @@ builder.Services.AddHostedService<FileRetentionService>();
 builder.Services.AddRouting();
 builder.Services.AddLogging();
 
-var app = builder.Build();
 
+var app = builder.Build();
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(20) });
 app.MapManagementEndpoints();
 app.MapStreamEndpoints();

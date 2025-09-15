@@ -1,5 +1,6 @@
 # TinyCam config.yaml
 
+
 # ── Basics ────────────────────────────────────────────────────────────────
 platform: auto
 device: '@device_pnp_\\?\usb#vid_045e&pid_0812&mi_00#6&151e9577&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global'
@@ -76,3 +77,12 @@ LogMode: stdout
 LogMaxSizeMB: 1
 LogMaxFiles: 2
 LogRollDaily: false
+
+# ── SSL ───────────────────────────────────────────────────────
+# To use HTTPS, first change the "Url" in appsettings.json to start with "https://". Then, add the certificate entry here.
+# Below is an example.
+certificateType: pfx        # pfx | pem
+pfxPath: C:\Utility\certs\tinycam_dev.pfx
+pemCertPath: ""
+pemKeyPath: ""
+password: yourpassword      # password of encrypted certificates

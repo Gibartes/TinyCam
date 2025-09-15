@@ -21,7 +21,7 @@ public static class ManagementEndpoints
 
     public static void MapManagementEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/", async (HttpContext ctx) =>
+        app.MapGet("/", (HttpContext ctx) =>
         {
             return Results.Ok(new { app = "TinyCam", status = "ok" });
         });

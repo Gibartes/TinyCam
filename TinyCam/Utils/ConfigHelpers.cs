@@ -6,7 +6,6 @@ public static class ConfigHelpers
 {
     public static void ApplyConfig(TinyCamConfig dst, TinyCamConfig src)
     {
-        // 기본
         dst.Platform = src.Platform;
         dst.Device = src.Device;
         dst.Width = src.Width;
@@ -18,14 +17,14 @@ public static class ConfigHelpers
         dst.SegmentSeconds = src.SegmentSeconds;
         dst.FfmpegPath = src.FfmpegPath;
         dst.Encoder = src.Encoder;
+        dst.StreamOnly = src.StreamOnly;
+        dst.NvencPreset = src.NvencPreset;
 
-        // 안정화/입력
         dst.RtbufSize = src.RtbufSize;
         dst.ThreadQueueSize = src.ThreadQueueSize;
         dst.UseWallclockTimestamps = src.UseWallclockTimestamps;
         dst.UseLowPower = src.UseLowPower;
 
-        // 암호화 옵션
         dst.SaveEncryptedConfig = src.SaveEncryptedConfig;
         dst.IsEncrypted = src.IsEncrypted;
         dst.Cipher = src.Cipher;
@@ -43,6 +42,7 @@ public static class ConfigHelpers
         dst.SegmentFormat = src.SegmentFormat;
         dst.PipeFormat = src.PipeFormat;
         dst.PipeLive = src.PipeLive;
+        dst.FileNamePattern = src.FileNamePattern;
 
         dst.EnableAudio = src.EnableAudio;
         dst.AudioDevice = src.AudioDevice;
@@ -60,6 +60,13 @@ public static class ConfigHelpers
         dst.LogMaxSizeMB = src.LogMaxSizeMB;
         dst.LogMaxFiles = src.LogMaxFiles;
         dst.LogRollDaily = src.LogRollDaily;
+        dst.UseFileRotation = src.UseFileRotation;
+        dst.RetainMaxFiles = src.RetainMaxFiles;
+        dst.RetentionSweepSeconds = src.RetentionSweepSeconds;
+        dst.RetainSafeWindowSeconds = src.RetainSafeWindowSeconds;
+        dst.RetainFilePrefix = src.RetainFilePrefix;
+
+        // SSL Settings does not changed while server alive.
 
         void CopyOpt(string name)
         {

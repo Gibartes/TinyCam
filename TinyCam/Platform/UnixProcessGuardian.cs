@@ -10,8 +10,6 @@ public sealed class UnixProcessGuardian : IProcessGuardian
     public ProcessStartInfo PrepareStartInfo(ProcessStartInfo psi, TinyCamConfig cfg)
     {
         if (!cfg.UseSetSidOnUnix) return psi;
-
-        // setsid가 있으면 세션/그룹 분리로 실행 → 그룹 종료 가능
         var setsid = (cfg.SetSidCandidates ?? new[] { "/usr/bin/setsid", "/bin/setsid" })
                      .FirstOrDefault(File.Exists);
         if (string.IsNullOrEmpty(setsid)) return psi;
@@ -30,12 +28,10 @@ public sealed class UnixProcessGuardian : IProcessGuardian
 
     public void Attach(Process proc, TinyCamConfig cfg)
     {
-        // Unix는 별도 부착 불필요
     }
 
     public async Task<bool> TryGracefulTerminateAsync(Process proc, int timeoutMs)
     {
-        // 프로세스 “그룹”에 SIGTERM → timeout 내 종료 여부
         try
         {
             int target = cfgCached?.UnixKillProcessGroup == true ? -Math.Abs(proc.Id) : proc.Id;

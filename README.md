@@ -75,6 +75,41 @@ It captures video from a local camera, **hardware-encodes** it (Intel QSV / NVID
 
 ### Build (single-file, self-contained)
 
+---
+
+#### Using helper scripts
+
+If you prefer not to type the full `dotnet publish` commands, use the scripts under the **`Tools/`** directory:
+
+**Windows (PowerShell):**
+
+```powershell
+# From the repo root
+.\Tools\build.ps1
+```
+
+**Linux/macOS (bash):**
+
+```bash
+# From the repo root
+chmod 750 ./Tools/build.sh
+./Tools/build.sh
+```
+
+Both scripts produce self-contained builds for the target platforms and place the output at:
+
+```
+./TinyCam/bin/Release/net8.0/<RID>/publish/TinyCam(.exe)
+```
+
+> **Notes**
+>
+> * Requires **.NET SDK 8.0+** installed and available on PATH.
+> * On Linux/macOS, you might need to grant execute permission to the script (`chmod +x`).
+> * The scripts mirror the exact publish options shown above (`PublishSingleFile=true`, `PublishTrimmed=false`, `--self-contained true`). If you need to change the runtime identifier (RID) or other flags, edit the script in `Tools/`.
+
+#### Build command
+
 Windows x64:
 
 ```bash
@@ -104,7 +139,48 @@ TinyCam.exe
 # TINY_CAM_CONFIG=config.json TINY_CAM_KEYS=keys.json ./TinyCam
 ```
 
-Server listens on `http://0.0.0.0:8080` by default.
+The server runs by default at **[http://127.0.0.1:8080](http://127.0.0.1:8080)**.
+You can change the port in **appsettings.json**. After registering the certificate via **config.yaml** and updating the URL to **https**, HTTPS can be enabled. However, using **Nginx** is recommended by default.
+
+## Configuration (`appsettings.json`)
+Here's a README-friendly explanation you can place above your configuration examples:
+
+---
+
+## Configuration (`appsettings.json`)
+
+By default, the server runs over **HTTP** at `http://0.0.0.0:8080`.
+You can change the port or enable **HTTPS** by editing the `appsettings.json` file.
+
+### HTTP (default)
+
+```json
+{
+  "Kestrel": {
+    "Endpoints": {
+      "Http": { "Url": "http://0.0.0.0:8080" }
+    }
+  },
+  "Logging": { "LogLevel": { "Default": "Information" } }
+}
+```
+
+### HTTPS (after setting up certificates)
+
+To enable HTTPS, first register your certificate and private key in your configuration (for example in `config.yaml`), then change the endpoint URL to use `https://` as shown below:
+
+```json
+{
+  "Kestrel": {
+    "Endpoints": {
+      "Http": { "Url": "https://0.0.0.0:8443" }
+    }
+  },
+  "Logging": { "LogLevel": { "Default": "Information" } }
+}
+```
+
+> **Note**: For production deployments, it is recommended to run the application behind a reverse proxy such as **Nginx** and terminate TLS there.
 
 ---
 
@@ -113,8 +189,6 @@ Server listens on `http://0.0.0.0:8080` by default.
 > Place next to the binary or point via `TINY_CAM_CONFIG`.
 
 ```yaml
-# TinyCam config.yaml
-
 # ── Basics ────────────────────────────────────────────────────────────────
 platform: auto
 device: '@device_pnp_\\?\usb#vid_045e&pid_0812&mi_00#6&151e9577&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global'
@@ -192,6 +266,14 @@ LogMaxSizeMB: 1
 LogMaxFiles: 2
 LogRollDaily: false
 
+# ── SSL ───────────────────────────────────────────────────────
+# To use HTTPS, first change the "Url" in appsettings.json to start with "https://". Then, add the certificate entry here.
+# Below is an example.
+certificateType: pfx        # pfx | pem
+pfxPath: C:\Utility\certs\tinycam_dev.pfx
+pemCertPath: ""
+pemKeyPath: ""
+password: yourpassword      # password of encrypted certificates
 ```
 
 ---
@@ -259,6 +341,10 @@ device: 'video="@device_pnp_\\?\usb#vid_045e&pid_0812&mi_00#6&3a91f6c1&0&0000#{6
 > Tip: The line labeled `recommended:` from `/device` can be pasted directly into `device`.
 
 ### Option B: Use FFmpeg directly
+
+```powershell
+.\ffmpeg.exe -hide_banner -f dshow -list_devices true -i dummy
+```
 
 ```bash
 ffmpeg -hide_banner -f dshow -list_devices true -i dummy
@@ -374,8 +460,8 @@ Query:
     * **AAD** bound to stream parameters to prevent cross-use.
   * Verification failure → connection rejected/closed.
 
-* **HTTPS** : TinyCam Server does not implement HTTPS.
-  * Put TinyCam behind NGINX (or any TLS reverse proxy) for HTTPS termination and HTTP/2.
+* **HTTPS** : TinyCam Server supports HTTPS.
+  * Recommend that put TinyCam behind NGINX (or any TLS reverse proxy) for HTTPS termination and HTTP/2.
   * TinyCam listens on http://0.0.0.0:8080 (configurable).
   * NGINX terminates TLS (443), proxies REST and WebSocket (/stream) to TinyCam.
   * Keep latency low by disabling proxy buffering for live streams.

@@ -12,7 +12,7 @@ public sealed class WindowsProcessGuardian : IProcessGuardian
     private readonly object _lock = new();
 
     public ProcessStartInfo PrepareStartInfo(ProcessStartInfo psi, TinyCamConfig cfg)
-        => psi; // 별도 래핑 없음
+        => psi;
 
     public void Attach(Process proc, TinyCamConfig cfg)
     {
@@ -42,7 +42,6 @@ public sealed class WindowsProcessGuardian : IProcessGuardian
 
     public async Task<bool> TryGracefulTerminateAsync(Process proc, int timeoutMs)
     {
-        // Windows에서는 ffmpeg의 'q'는 Muxer에서 보내고, 여기서는 “대기”만 담당
         try
         {
             using var cts = new CancellationTokenSource(timeoutMs);
