@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using TinyCam.Data;
+﻿using TinyCam.Data;
 using TinyCam.Endpoints;
 using TinyCam.Logging;
 using TinyCam.Models;

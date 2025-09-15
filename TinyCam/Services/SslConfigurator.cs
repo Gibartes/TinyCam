@@ -3,17 +3,14 @@ using System.Net;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-
-using TinyCam.Models; // TinyCamConfig
-
+using TinyCam.Models;
 namespace TinyCam.Services;
 
-
 /* 
-    * TinyCam Kestrel (HTTP/HTTPS/WSS) endpoint configuration helper.
-    * - Enables HTTPS/WSS using two PEM files (certificate/key)
-    * - Supports simultaneous HTTP binding and optional HTTP→HTTPS redirection
-    * - Supports toggling HTTP/2 and HTTP/3
+ * TinyCam Kestrel (HTTP/HTTPS/WSS) endpoint configuration helper.
+ * - Enables HTTPS/WSS using two PEM files (certificate/key)
+ * - Supports simultaneous HTTP binding and optional HTTP→HTTPS redirection
+ * - Supports toggling HTTP/2 and HTTP/3
 */
 
 public static class SslConfigurator

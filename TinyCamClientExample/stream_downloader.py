@@ -13,6 +13,7 @@ import time
 from dataclasses import dataclass
 from typing import Optional, Tuple, AsyncIterator
 
+import ssl
 import httpx
 import websockets
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -113,7 +114,6 @@ class TinyCamClient:
             self.log.warning("managementKey not set; skip /start")
             return (0, "skip")
         body = {"force": bool(force), "ts":gen_ts()}
-        print(body)
         sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.post(
@@ -130,7 +130,7 @@ class TinyCamClient:
             return (0, "skip")
         body = {"force": bool(force), "ts":gen_ts()}
         sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
             r = await client.post(
                 f"{self.http_base}/stop",
                 headers={"Authorization": sig, "Content-Type": "application/json"},
@@ -144,7 +144,7 @@ class TinyCamClient:
             self.log.warning("managementKey not set; skip /apply-config")
             return (0, "skip")
         sig = hmac_b64(json.dumps({"force": True, "ts":gen_ts()}), self.keys.management_key_b64)
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
             try:
                 r = await client.post(
                     f"{self.http_base}/apply-config",
@@ -162,7 +162,7 @@ class TinyCamClient:
             self.log.warning("managementKey not set; skip /device")
             return (0, "skip")
         sig = hmac_b64("", self.keys.management_key_b64)
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
             r = await client.get(f"{self.http_base}/device",
                                  headers={"Authorization": sig})
             return (r.status_code, r.text)
@@ -173,6 +173,11 @@ class TinyCamClient:
         TinyCam WS에 연결해 **복호화된 비디오 바이트**를 yield.
         파일 I/O는 하지 않음. (쓰기 분리)
         """
+
+        sslctx = ssl.create_default_context()
+        sslctx.check_hostname = False
+        sslctx.verify_mode = ssl.CERT_NONE
+
         access_key = safe_b64decode(self.keys.access_key_b64)
 
         # 1) token/exp/cnonce
@@ -191,6 +196,7 @@ class TinyCamClient:
             ping_timeout=20,
             close_timeout=10,
             open_timeout=self.ws_timeout,
+            ssl=sslctx
         ) as ws:
             # 2) hello
             hello_msg = await ws.recv()
@@ -280,9 +286,13 @@ async def main_async(args):
 
     keys = Keys.load(args.keys)
 
+    
+    http_base = f"{'https' if args.ssl else 'http'}://{args.host}:{args.port}"
+    wss_base  = f"{'wss' if args.ssl else 'ws'}://{args.host}:{args.port}/stream"
+    
     client = TinyCamClient(
-        http_base=args.http,
-        ws_url=args.ws,
+        http_base=http_base,
+        ws_url=wss_base,
         keys=keys,
         out_path=args.out,
         codec_hint=args.codec_hint,
@@ -318,25 +328,52 @@ async def main_async(args):
 
 def parse_args():
     p = argparse.ArgumentParser(description="TinyCam secure streaming client")
-    p.add_argument('--device', action='store_true', help="query device list")
-    p.add_argument("--http", default="http://127.0.0.1:8080",
-                   help="HTTP base for management endpoints (default: %(default)s)")
-    p.add_argument("--ws", default="ws://127.0.0.1:8080/stream",
-                   help="WebSocket URL (default: %(default)s)")
-    p.add_argument("--out", default="tinycam_out.webm",
-                   help="output file path (decrypted) (default: %(default)s)")
-    p.add_argument("--keys", default="keys.json",
-                   help="keys file path (JSON: {managementKey, accessKey}) (default: %(default)s)")
-    p.add_argument("--codec-hint", default="vp9",
-                   help="codec hint if server hello lacks codec (default: %(default)s)")
-    p.add_argument("--start", action="store_true",
-                   help="call /start before streaming (requires managementKey)")
-    p.add_argument("--stop", action="store_true",
-                   help="call /stop after streaming (requires managementKey)")
-    p.add_argument("--apply", action="store_true",
-                   help="call /apply-config before streaming (requires managementKey)")
-    p.add_argument("--debug", action="store_true",
-                   help="enable debug logging (timings, etc.)")
+    p.add_argument(
+        "-k", "--keys", required=True,
+        help="Path to JSON with credentials: {\"managementKey\": \"...\", \"accessKey\": \"...\"} "
+            "(default: %(default)s).")
+
+    p.add_argument(
+        "-t", "--host", default="127.0.0.1",
+        help="Base hostname or IP for management endpoints (default: %(default)s).")
+
+    p.add_argument(
+        "-p", "--port", type=int, default=8080,
+        help="HTTP server port for management endpoints (default: %(default)s).")
+
+    p.add_argument(
+        "-l", "--ssl", action="store_true",
+        help="Use HTTPS (wss/https) for all requests instead of HTTP (ws/http).")
+
+    p.add_argument(
+        "-o", "--out", default="tinycam_out.webm",
+        help="Output file path for the decrypted recording (default: %(default)s).")
+
+    p.add_argument(
+        "--device", action="store_true",
+        help="List available capture/compute devices on this host and exit.")
+
+    p.add_argument(
+        "--start", action="store_true",
+        help="Call /start on the node before streaming (requires managementKey).")
+
+    p.add_argument(
+        "--stop", action="store_true",
+        help="Call /stop on the node after streaming completes (requires managementKey).")
+
+    p.add_argument(
+        "--apply", action="store_true",
+        help="Call /apply-config on the node before streaming (requires managementKey).")
+
+    p.add_argument(
+        "--codec-hint", default="vp9",
+        help="Preferred codec to request/use when the server does not advertise one "
+            "(default: %(default)s).")
+
+    p.add_argument(
+        "--debug", action="store_true",
+        help="Enable verbose debug logging (timings, request/response details).")
+
     return p.parse_args()
 
 
@@ -349,4 +386,9 @@ def main():
 
 
 if __name__ == "__main__":
+    """
+    [ SAMPLE COMMAND TO TEST ]
+    python stream_downloader.py --host 127.0.0.1 --port 8080 --ssl --keys keys.json 
+    """
+    
     main()

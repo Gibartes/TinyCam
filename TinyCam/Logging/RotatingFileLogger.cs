@@ -103,7 +103,6 @@ public sealed class RotatingFileLoggerProvider : ILoggerProvider
             try { _writer.Dispose(); } catch { }
             _currentDate = DateOnly.FromDateTime(DateTime.Now);
 
-            // 날짜별 파일명: tinycam_YYYY-MM-DD.log (원본이 .log면 확장자 앞에 날짜)
             var ext = Path.GetExtension(_basePath);
             var stem = Path.ChangeExtension(_basePath, null);
             var dated = $"{stem}_{_currentDate:yyyy-MM-dd}{ext}";
@@ -115,7 +114,6 @@ public sealed class RotatingFileLoggerProvider : ILoggerProvider
             try { _writer.Flush(); } catch { }
             try { _writer.Dispose(); } catch { }
 
-            // 뒤에서 앞으로 밀기: .(N-1) → .N
             for (int i = _maxFiles - 1; i >= 1; i--)
             {
                 var src = $"{_basePath}.{i}";
@@ -124,7 +122,6 @@ public sealed class RotatingFileLoggerProvider : ILoggerProvider
                 if (File.Exists(src)) { try { File.Move(src, dst); } catch { } }
             }
 
-            // base → .1
             var first = $"{_basePath}.1";
             if (File.Exists(first)) { try { File.Delete(first); } catch { } }
             if (File.Exists(_basePath)) { try { File.Move(_basePath, first); } catch { } }
@@ -139,7 +136,7 @@ public sealed class RotatingFileLoggerProvider : ILoggerProvider
             var fs = new FileStream(path,
                 append ? FileMode.Append : FileMode.Create,
                 FileAccess.Write,
-                FileShare.Read); // 읽기 공유 허용
+                FileShare.Read);
             return new StreamWriter(fs, new UTF8Encoding(false)) { AutoFlush = true };
         }
     }
