@@ -513,6 +513,39 @@ Enable FFmpeg stderr capture by `"ffmpegDebug": true`.
 * Prefer **QSV/NVENC** encoders.
 * For CPU encoders, reduce resolution/FPS or raise CRF.
 
+### Compatibility Notice
+
+This project is designed to be **cross-platform**, but it has **not yet been tested on Linux**.
+It has been fully verified on **Windows**, where it works as expected.
+
+* On Linux, **runtime errors may occur** until we complete validation.
+* We plan to run end-to-end tests on major distros (Ubuntu LTS, Debian, Rocky/Alma) and, if no blocking issues are found, **release version 1.2.0** with official Linux support.
+* In the meantime, community testing is welcome—please report issues with logs and repro steps.
+
+**Known/likely Linux gotchas to check during validation**
+
+* File permissions & executable bits (`chmod +x`), case-sensitive paths, and `ulimit`/open-file limits.
+* TLS certificate paths & formats (PEM/PFX) and Kestrel binding differences.
+* FFmpeg/iGPU acceleration availability (VAAPI/QSV) and `/dev/dri` device access if applicable.
+* Environment variables vs. `appsettings.json` overrides; service unit behavior (systemd).
+* Locale/encoding differences (UTF-8) and line endings.
+
+---
+
+## Status & roadmap**
+
+* ✅ Windows: tested and working.
+* ⏳ Linux: testing planned; if stable, **tag v1.2.0** as the first release with official Linux support.
+
+If you run on Linux before v1.2.0 and hit problems, please open an issue with:
+
+* OS/Distro + kernel version
+* .NET runtime/SDK version (`dotnet --info`)
+* Exact command used and full logs/stack traces
+* Minimal repro if possible
+
+Thanks for helping us harden the cross-platform experience!
+
 ---
 
 ## License
