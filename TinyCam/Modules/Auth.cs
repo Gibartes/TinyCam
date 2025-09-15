@@ -53,18 +53,18 @@ public static class Auth
         return WebEncoders.Base64UrlEncode(mac);
     }
 
-    public static async Task<bool> VerifyHmacAsync(HttpContext ctx, string keyB64)
+    public static async Task<(bool, string?)> VerifyHmacAsync(HttpContext ctx, string keyB64)
     {
         try
         {
             var sig = ctx.Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(sig)) return false;
+            if (string.IsNullOrEmpty(sig)) return (false, null);
             using var sr = new StreamReader(ctx.Request.Body, Encoding.UTF8, leaveOpen: true);
             var body = await sr.ReadToEndAsync();
-            return VerifyHmac(body, sig, keyB64);
+            return (VerifyHmac(body, sig, keyB64), body);
         }
         catch{
-            return false;
+            return (false, null);
         }
     }
 

@@ -113,6 +113,7 @@ class TinyCamClient:
             self.log.warning("managementKey not set; skip /start")
             return (0, "skip")
         body = {"force": bool(force), "ts":gen_ts()}
+        print(body)
         sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.post(

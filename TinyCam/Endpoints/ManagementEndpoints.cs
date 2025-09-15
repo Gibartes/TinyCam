@@ -1,9 +1,10 @@
-﻿using System.Text;
+﻿using System.Reflection.Metadata;
+using System.Text;
 using System.Text.Json;
-using TinyCam.Services;
+using TinyCam.Data;
 using TinyCam.Models;
 using TinyCam.Modules;
-using TinyCam.Data;
+using TinyCam.Services;
 using TinyCam.Services.Devices;
 using TinyCam.Utils;
 
@@ -27,7 +28,8 @@ public static class ManagementEndpoints
 
         app.MapGet("/device", async (HttpContext ctx, IDeviceTextEnumerator dev, TinyCamConfig liveCfg, KeyStore ks) =>
         {
-            if (!await Auth.VerifyHmacAsync(ctx, ks.ManagementKey))
+            var result = await Auth.VerifyHmacAsync(ctx, ks.ManagementKey);
+            if (!result.Item1)
                 return Results.Unauthorized();
 
             string kind = (ctx.Request.Query["kind"].ToString() ?? "all").ToLowerInvariant(); // video|audio|all
@@ -43,8 +45,10 @@ public static class ManagementEndpoints
         {
             try
             {
-                if (!await Auth.VerifyHmacAsync(ctx, ks.ManagementKey)) return Results.Unauthorized();
-                using var doc = JsonDocument.Parse(await new StreamReader(ctx.Request.Body).ReadToEndAsync());
+                var result = await Auth.VerifyHmacAsync(ctx, ks.ManagementKey);
+                if (!result.Item1 || result.Item2 == null)
+                    return Results.Unauthorized();
+                using var doc = JsonDocument.Parse(result.Item2);
                 if(!TimeCheck(doc)) return Results.Unauthorized();
                 await host.StartAsync();
                 return Results.Ok(new { running = host.IsRunning });
@@ -59,8 +63,10 @@ public static class ManagementEndpoints
         {
             try
             {
-                if (!await Auth.VerifyHmacAsync(ctx, ks.ManagementKey)) return Results.Unauthorized();
-                using var doc = JsonDocument.Parse(await new StreamReader(ctx.Request.Body).ReadToEndAsync());
+                var result = await Auth.VerifyHmacAsync(ctx, ks.ManagementKey);
+                if (!result.Item1 || result.Item2 == null)
+                    return Results.Unauthorized();
+                using var doc = JsonDocument.Parse(result.Item2);
                 if (!TimeCheck(doc)) return Results.Unauthorized();
                 await host.StopAsync();
                 return Results.Ok(new { running = host.IsRunning });
@@ -72,12 +78,18 @@ public static class ManagementEndpoints
 
         app.MapPost("/apply", async (HttpContext ctx, MuxerHost host, TinyCamConfig liveCfg, KeyStore ks) =>
         {
-            if (!await Auth.VerifyHmacAsync(ctx, ks.ManagementKey)) return Results.Unauthorized();
             try
             {
-                using var doc = JsonDocument.Parse(await new StreamReader(ctx.Request.Body).ReadToEndAsync());
+                var result = await Auth.VerifyHmacAsync(ctx, ks.ManagementKey);
+                if (!result.Item1 || result.Item2 == null)
+                    return Results.Unauthorized();
+                using var doc = JsonDocument.Parse(result.Item2);
                 if (!TimeCheck(doc)) return Results.Unauthorized();
-                var yaml = await new StreamReader(ctx.Request.Body, Encoding.UTF8).ReadToEndAsync();
+                if (!doc.RootElement.TryGetProperty("config", out var tsEl))
+                {
+                    return Results.UnprocessableEntity();
+                }
+                var yaml   = tsEl.ToString();
                 var parsed = TinyCamConfig.ParseAndMaybeEncrypt(yaml, ks);
                 TinyCamConfig.Save("config.yaml", parsed, ks);
                 Utils.ConfigHelpers.ApplyConfig(liveCfg, parsed);
@@ -92,11 +104,12 @@ public static class ManagementEndpoints
 
         app.MapPost("/apply-config", async (HttpContext ctx, MuxerHost host, TinyCamConfig liveCfg, KeyStore ks) =>
         {
-            if (!await Auth.VerifyHmacAsync(ctx, ks.ManagementKey))
-            { return Results.Unauthorized(); }
             try
             {
-                using var doc = JsonDocument.Parse(await new StreamReader(ctx.Request.Body).ReadToEndAsync());
+                var result = await Auth.VerifyHmacAsync(ctx, ks.ManagementKey);
+                if (!result.Item1 || result.Item2 == null)
+                    return Results.Unauthorized();
+                using var doc = JsonDocument.Parse(result.Item2);
                 if (!TimeCheck(doc)) return Results.Unauthorized();
                 var configPath = Environment.GetEnvironmentVariable("TINY_CAM_CONFIG") ?? "config.yaml";
                 var newCfg = TinyCamConfig.Load(configPath, ks);
@@ -114,8 +127,10 @@ public static class ManagementEndpoints
         {
             try
             {
-                if (!await Auth.VerifyHmacAsync(ctx, ks.ManagementKey)) return Results.Unauthorized();
-                using var doc = JsonDocument.Parse(await new StreamReader(ctx.Request.Body).ReadToEndAsync());
+                var result = await Auth.VerifyHmacAsync(ctx, ks.ManagementKey);
+                if (!result.Item1 || result.Item2 == null)
+                    return Results.Unauthorized();
+                using var doc = JsonDocument.Parse(result.Item2);
                 if (!TimeCheck(doc)) return Results.Unauthorized();
                 if (!doc.RootElement.TryGetProperty("accessKey", out var ak)) return Results.BadRequest(new { error = "missing accessKey" });
                 ks.RotateAccessKey(ak.GetString() ?? "");

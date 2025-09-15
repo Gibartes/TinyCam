@@ -256,7 +256,7 @@ Then set it in `config.yaml` (quote it to preserve backslashes):
 device: 'video="@device_pnp_\\?\usb#vid_045e&pid_0812&mi_00#6&3a91f6c1&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global"'
 ```
 
-> Tip: The line labeled `recommended:` from `/devices` can be pasted directly into `device`.
+> Tip: The line labeled `recommended:` from `/device` can be pasted directly into `device`.
 
 ### Option B: Use FFmpeg directly
 
@@ -393,7 +393,7 @@ Query:
     * Alternative: `video="@device_pnp_\\?\usb#vid_045e&pid_0812&...\\global"`
 * **Linux (v4l2)**: typical `"/dev/video0"`
 
-You can query `/devices` and copy the **recommended** token.
+You can query `/device` and copy the **recommended** token.
 
 ---
 
