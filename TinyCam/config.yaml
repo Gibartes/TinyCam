@@ -86,3 +86,7 @@ pfxPath: C:\Utility\certs\tinycam_dev.pfx
 pemCertPath: ""
 pemKeyPath: ""
 password: yourpassword      # password of encrypted certificates
+
+# ── Casting Option ───────────────────────────────────────────────────────
+channelCapacity: 256
+channelTimeout: 60

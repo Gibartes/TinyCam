@@ -107,6 +107,9 @@ public class TinyCamConfig
     public string? PemCertPath { get; set; } // server.crt / fullchain.pem
     public string? PemKeyPath { get; set; } // server.key (PKCS#1/#8)
 
+    public int ChannelCapacity { get; set; } = 256;
+    public int ChannelTimeout { get; set; } = 60;
+
     public static TinyCamConfig Load(string path, KeyStore ks)
     {
         if (!File.Exists(path))
