@@ -298,7 +298,6 @@
       this.recordMaxBytes = Number.isFinite(opts.maxBytes) ? Math.max(1024*1024, opts.maxBytes) : Infinity;
       if (opts.mode) this.captureMode = (opts.mode === 'raw') ? 'raw' : 'mediarec';
 
-      // ★ 통계 초기화
       this._recStartAt = performance.now();
       this._recStopAt  = null;
       this._recBytes   = 0;
