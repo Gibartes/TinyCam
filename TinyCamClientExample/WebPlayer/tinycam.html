@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<!-- ===== SVG icon sprite ===== -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!-- Play -->
+  <symbol id="ico-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <polygon points="8 5 19 12 8 19 8 5"></polygon>
+  </symbol>
+  <!-- Stop -->
+  <symbol id="ico-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+  </symbol>
+  <!-- Record -->
+  <symbol id="ico-record" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="0">
+    <circle cx="12" cy="12" r="6"></circle>
+  </symbol>
+  <!-- Download -->
+  <symbol id="ico-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path>
+  </symbol>
+  <!-- Upload -->
+  <symbol id="ico-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <path d="M7 10l5-5 5 5"></path><path d="M12 5v12"></path>
+  </symbol>
+  <!-- Save -->
+  <symbol id="ico-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/>
+    <path d="M17 21V13H7v8"/><path d="M7 3v6h8"/>
+  </symbol>
+  <!-- Trash -->
+  <symbol id="ico-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+    <path d="M10 11v6M14 11v6"></path>
+  </symbol>
+  <!-- Broom -->
+  <symbol id="ico-broom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 21l6-6"/><path d="M15 7l6-6"/><path d="M6 18c3 1 6-2 7-3l2-2c1-1 4-4 3-7"/>
+  </symbol>
+  <!-- Wrench -->
+  <symbol id="ico-wrench" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.5 7A5.5 5.5 0 1 0 17 13.5L21 17.5 17.5 21 13.5 17a5.5 5.5 0 0 0-3-10z"/>
+  </symbol>
+  <!-- Scroll -->
+  <symbol id="ico-scroll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 4h10a2 2 0 0 1 2 2v12H9a2 2 0 0 1-2-2V4z"/><path d="M7 8h12"/><path d="M7 12h12"/>
+  </symbol>
+  <!-- Theme icons -->
+  <symbol id="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2v2M12 20v2M20 12h2M2 12H4M18.36 5.64l1.41-1.41M4.23 19.78l1.41-1.41M18.36 18.36l1.41 1.41M4.23 4.22l1.41 1.41"/>
+  </symbol>
+  <symbol id="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </symbol>
+</svg>
+
+<head>
+  <meta charset="utf-8" />
+  <title>TinyCam WebView - Foldable Sidebar + Secure Key + REC Stats</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root { color-scheme: light dark; }
+
+    /* ================= THEME TOKENS ================= */
+    :root {
+      /* Dark (default) */
+      --bg: #0b0b0b;
+      --fg: #e5e7eb;
+      --muted: #9ca3af;
+
+      --card: #141518;
+      --card-2: #101010;
+      --sidebar: #0f1012;
+
+      --border: #ffffff1a;
+      --border-soft: #0002;
+
+      --btn: #17191e;
+      --btn-hover: #1a1c21;
+
+      --accent: #3b82f6;
+      --danger: #ef4444;
+
+      --video-bg: #000;
+      --log-bg: #0b0b0b;
+      --input-bg: #111;
+    }
+    :root.theme-light {
+      /* Light */
+      --bg: #f8fafc;
+      --fg: #0f172a;
+      --muted: #475569;
+
+      --card: #ffffff;
+      --card-2: #ffffff;
+      --sidebar: #ffffff;
+
+      --border: #0000001a;
+      --border-soft: #0000001a;
+
+      --btn: #f4f6f9;
+      --btn-hover: #eef2ff;
+
+      --accent: #2563eb;
+      --danger: #dc2626;
+
+      --video-bg: #000;
+      --log-bg: #ffffff;
+      --input-bg: #ffffff;
+    }
+
+    html, body { height:100%; }
+    body {
+      margin:0; min-height:100vh; display:flex; flex-direction:column;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", sans-serif;
+      background: var(--bg); color: var(--fg);
+    }
+
+    /* Top bar */
+    .topbar {
+      position: sticky; top: 0; z-index: 30;
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px; background: var(--bg); border-bottom:1px solid var(--border-soft);
+    }
+    .toggle, .chip {
+      border:1px solid var(--border); background: var(--btn); color: var(--fg);
+      border-radius:999px; padding:8px 12px; cursor:pointer; font-weight:700;
+      display:inline-flex; align-items:center; gap:.5rem;
+    }
+    .toggle:hover, .chip:hover { background: var(--btn-hover); }
+    .title { flex:1 1 auto; text-align:center; font-weight:800; letter-spacing:.2px; }
+    .status-pill { padding:4px 10px; border-radius:999px; background:color-mix(in srgb, var(--fg) 10%, transparent); color:var(--fg); font-size:12px; }
+
+    /* REC badge */
+    .rec-badge {
+      display:none; align-items:center; gap:6px; margin-left:6px;
+      font-weight:800; color:var(--danger); background:color-mix(in srgb, var(--danger) 15%, transparent);
+      border:1px solid color-mix(in srgb, var(--danger) 30%, transparent); border-radius:999px; padding:3px 8px;
+    }
+    .rec-badge .dot {
+      width:8px; height:8px; border-radius:50%; background:var(--danger);
+      box-shadow:0 0 8px color-mix(in srgb, var(--danger) 70%, transparent);
+      animation: recPulse 1s steps(2) infinite;
+    }
+    .rec-badge.on { display:inline-flex; }
+    @keyframes recPulse { 50% { opacity: .35; } }
+
+    /* Workspace */
+    .workspace { flex:1 1 auto; min-height:0; display:flex; gap:0; }
+
+    /* Sidebar (foldable) */
+    .sidebar {
+      width: 220px; min-width: 180px; max-width: 280px;
+      background: var(--sidebar); border-right:1px solid var(--border-soft);
+      display:flex; flex-direction:column; padding:10px; gap:12px;
+      overflow:auto; transition: width .18s ease;
+    }
+    .sidebar.collapsed { width: 56px; min-width:56px; padding:10px 8px; }
+
+    .group { display:flex; flex-direction:column; gap:6px; }
+    .group-title {
+      font-size:11px; color:var(--muted); padding:2px 4px;
+      text-transform:uppercase; letter-spacing:.06em; transition:opacity .15s ease;
+    }
+    .sidebar.collapsed .group-title { opacity:0; height:0; overflow:hidden; padding:0; margin:0; }
+
+    /* Buttons */
+    .btn {
+      display:flex; align-items:center; gap:.4rem;
+      width:100%; padding:6px 8px; font-size:13px; border-radius:8px;
+      background: var(--card); color: var(--fg); cursor:pointer;
+      border:1px solid var(--border);
+      transition: background .12s ease, border-color .12s ease;
+      font-weight:700;
+    }
+    .btn:hover { background: var(--btn-hover); }
+    .btn .ico { width:16px; height:16px; flex-shrink:0; }
+    .btn .label { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sidebar.collapsed .btn { justify-content:center; padding:8px; }
+    .sidebar.collapsed .btn .label { display:none; }
+
+    /* Content */
+    .content { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; min-height:0; }
+
+    /* Control panel */
+    .control {
+      background: var(--card-2); border-bottom:1px solid var(--border-soft);
+      transition: height .2s ease, opacity .2s ease; overflow:hidden;
+    }
+    .control.collapsed { height:0; opacity:0; border-bottom-color: transparent; }
+    .control.expanded  { height:auto; opacity:1; }
+    .control-inner {
+      display:flex; flex-direction:column; gap:12px;
+      padding:12px 16px; max-height: 50vh; overflow:auto;
+    }
+    .row { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+    label { display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--muted); }
+    input[type="text"], input[type="number"], select {
+      min-width: 160px; padding:8px; border-radius:8px; border:1px solid color-mix(in srgb, var(--fg) 20%, transparent);
+      background: var(--input-bg); color: var(--fg);
+    }
+    input[type="checkbox"] { transform: scale(1.05); }
+    .grow { flex:1 1 auto; min-width: 120px; }
+    .section-title { margin: 4px 0 -4px; color:var(--muted); font-size:13px; }
+
+    /* Secret input (Access Key) */
+    .secret { display:flex; align-items:center; gap:8px; width: min(100%, 520px); }
+    .secret input { flex:1 1 auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Noto Sans Mono", monospace; }
+    .reveal {
+      border:1px solid var(--border); background: var(--btn); color: var(--fg);
+      border-radius:8px; padding:8px 10px; cursor:pointer; font-weight:700; white-space:nowrap;
+    }
+    .reveal:hover{ background: var(--btn-hover); }
+
+    /* Log area */
+    .section-header { display:flex; align-items:center; gap:10px; flex-wrap:nowrap; }
+    .section-header .section-title, .section-header .inline-toggle { margin:0; font-size:13px; line-height:1.25; }
+    label.inline-toggle { display:inline-flex; flex-direction:row !important; align-items:center; gap:6px; white-space:nowrap; }
+    label.inline-toggle input { transform:none; vertical-align:middle; margin:0; }
+    #log {
+      white-space: pre-wrap; background: var(--log-bg); color: var(--fg);
+      padding:10px; border-radius:8px; min-height:80px; max-height:220px; overflow:auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Noto Sans Mono", monospace; font-size:12px;
+      border:1px solid var(--border);
+    }
+    #btnTheme { padding: 4px 8px; }
+    #btnTheme .ico { width: 14px; height: 14px; } 
+    #themeLabel { font-size: 12px; } 
+
+    /* Media */
+    .media { flex:1 1 auto; min-height:0; display:flex; align-items:center; justify-content:center; padding:12px 16px; }
+    video { width:100%; height:100%; max-width:1920px; background: var(--video-bg); border-radius:12px; object-fit:contain; }
+
+    /* Responsive tweak */
+    @media (max-width: 780px) {
+      .sidebar { width: 164px; min-width:148px; }
+      .sidebar.collapsed { width: 52px; min-width:52px; }
+      .btn { padding:6px 8px; }
+    }
+
+    /* Tooltip when collapsed */
+    .btn[data-tip] { position:relative; }
+    .sidebar.collapsed .btn:hover::after {
+      content: attr(data-tip);
+      position: fixed; left: 60px; transform: translateY(-50%);
+      background: var(--card); color: var(--fg); padding:4px 8px; border-radius:6px; font-size:12px; border:1px solid var(--border);
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top header -->
+  <div class="topbar">
+    <button id="btnToggleMenu"  class="toggle" aria-expanded="true">☰ Menu</button>
+    <button id="btnTogglePanel" class="toggle" aria-expanded="true">▦ Panel</button>
+    <!-- REC badge with stats -->
+    <span id="recBadge" class="rec-badge" aria-hidden="true"><span class="dot"></span>REC</span>
+    <div class="title">TinyCam WebPlayer</div>
+    <div class="status-pill" id="status">idle</div>
+
+    <!-- Theme toggle -->
+    <button id="btnTheme" class="chip" title="Toggle Theme">
+      <svg class="ico" id="themeIcon" aria-hidden="true"><use href="#ico-moon"/></svg>
+      <span id="themeLabel">Dark</span>
+    </button>
+  </div>
+
+  <div class="workspace">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="group">
+        <div class="group-title">Stream</div>
+        <button id="sbStart" class="btn" data-tip="Start" title="Start">
+          <svg class="ico" aria-hidden="true"><use href="#ico-play"/></svg><span class="label">Start</span>
+        </button>
+        <button id="sbStop" class="btn" data-tip="Stop" title="Stop">
+          <svg class="ico" aria-hidden="true"><use href="#ico-stop"/></svg><span class="label">Stop</span>
+        </button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Recording</div>
+        <button id="sbCapStart" class="btn" data-tip="Start Capture" title="Start Capture">
+          <svg class="ico" aria-hidden="true"><use href="#ico-record"/></svg><span class="label">Start Capture</span>
+        </button>
+        <button id="sbCapStop" class="btn" data-tip="Stop Capture" title="Stop Capture">
+          <svg class="ico" aria-hidden="true"><use href="#ico-stop"/></svg><span class="label">Stop Capture</span>
+        </button>
+        <button id="sbCapDownload" class="btn" data-tip="Download" title="Download">
+          <svg class="ico" aria-hidden="true"><use href="#ico-download"/></svg><span class="label">Download</span>
+        </button>
+        <button id="sbCapClear" class="btn" data-tip="Clear Buffer" title="Clear Buffer">
+          <svg class="ico" aria-hidden="true"><use href="#ico-broom"/></svg><span class="label">Clear Buffer</span>
+        </button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Config</div>
+        <button id="sbSave" class="btn" data-tip="Save Config" title="Save Config">
+          <svg class="ico" aria-hidden="true"><use href="#ico-save"/></svg><span class="label">Save Config</span>
+        </button>
+        <button id="sbLoad" class="btn" data-tip="Load Config" title="Load Config">
+          <svg class="ico" aria-hidden="true"><use href="#ico-upload"/></svg><span class="label">Load Config</span>
+        </button>
+        <button id="sbClear" class="btn" data-tip="Clear Config" title="Clear Config">
+          <svg class="ico" aria-hidden="true"><use href="#ico-trash"/></svg><span class="label">Clear Config</span>
+        </button>
+      </div>
+
+      <div class="group">
+        <div class="group-title">Logs</div>
+        <button id="sbClearLogs" class="btn" data-tip="Clear Logs" title="Clear Logs">
+          <svg class="ico" aria-hidden="true"><use href="#ico-broom"/></svg><span class="label">Clear Logs</span>
+        </button>
+        <button id="sbToggleDebug" class="btn" data-tip="Toggle Debug" title="Toggle Debug">
+          <svg class="ico" aria-hidden="true"><use href="#ico-wrench"/></svg><span class="label">Toggle Debug</span>
+        </button>
+        <button id="sbToggleAutoScroll" class="btn" data-tip="Toggle Auto-scroll" title="Toggle Auto-scroll">
+          <svg class="ico" aria-hidden="true"><use href="#ico-scroll"/></svg><span class="label">Toggle Auto-scroll</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <section class="content">
+      <!-- Control panel -->
+      <section id="control" class="control expanded" aria-hidden="false">
+        <div class="control-inner">
+          <div class="row">
+            <label>Host
+              <input id="host" type="text" value="127.0.0.1" />
+            </label>
+            <label>Port
+              <input id="port" type="number" value="8080" />
+            </label>
+            <label>SSL (wss)
+              <input id="ssl" type="checkbox" />
+            </label>
+            <label class="grow">Access Key (base64)
+              <div class="secret">
+                <input id="accessKey" type="password" placeholder="paste accessKey (base64)" autocomplete="off" />
+                <button id="btnShowKey" class="reveal" type="button" aria-pressed="false" title="Show/Hide">Show</button>
+              </div>
+            </label>
+          </div>
+
+          <div class="row">
+            <label>Codec Hint
+              <input id="codecHint" type="text" value="vp9" />
+            </label>
+            <label>Server Timeout (sec)
+              <input id="srvTimeout" type="number" value="60" />
+            </label>
+            <label>Buffer Mode
+              <select id="bufferMode">
+                <option value="grow">grow (keep accumulating)</option>
+                <option value="window">window (keep last N minutes)</option>
+              </select>
+            </label>
+            <label>Window Minutes
+              <input id="windowMinutes" type="number" value="5" />
+            </label>
+            <label>Debug Logs
+              <input id="debug" type="checkbox" />
+            </label>
+            <label>Persist Access Key
+              <input id="persistKey" type="checkbox" />
+            </label>
+            <label>Log Buffer Limit
+              <input id="logLimit" type="number" value="1000" />
+            </label>
+          </div>
+
+          <div class="section-title">Recording Options (MediaRecorder by default)</div>
+          <div class="row">
+            <label>Max bytes (MB)
+              <input id="capMaxMB" type="number" value="300" />
+            </label>
+            <label>File name
+              <input id="capFile" type="text" value="tinycam.webm" />
+            </label>
+            <label>MIME
+              <input id="capMime" type="text" placeholder="(optional) e.g., video/webm" />
+            </label>
+            <div class="grow"></div>
+          </div>
+
+          <div class="section-header">
+            <div class="section-title">Log</div>
+            <label class="inline-toggle" title="Auto-scroll logs">
+              <input id="autoScroll" type="checkbox" checked />Auto-scroll
+            </label>
+          </div>
+          <div id="log"></div>
+        </div>
+      </section>
+
+      <!-- Media -->
+      <div class="media">
+        <video id="video" controls muted playsinline></video>
+      </div>
+    </section>
+  </div>
+
+  <!-- TinyCam UMD -->
+  <script src="./tinycam.player.js"></script>
+  <script>
+    (function(){
+      const UI_KEY = 'tinycam.ui';
+
+      // Topbar
+      const btnToggleMenu  = document.getElementById('btnToggleMenu');
+      const btnTogglePanel = document.getElementById('btnTogglePanel');
+      const recBadge = document.getElementById('recBadge');
+      const statusEl  = document.getElementById('status');
+
+      // Theme
+      const root = document.documentElement;
+      const btnTheme = document.getElementById('btnTheme');
+      const themeIcon = document.getElementById('themeIcon');
+      const themeLabel = document.getElementById('themeLabel');
+      const savedTheme = localStorage.getItem('tinycam.theme'); // 'light' | 'dark' | null
+      const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      const initialTheme = savedTheme ? savedTheme : (prefersLight ? 'light' : 'dark');
+      applyTheme(initialTheme);
+      btnTheme.addEventListener('click', () => {
+        const next = root.classList.contains('theme-light') ? 'dark' : 'light';
+        applyTheme(next);
+        try { localStorage.setItem('tinycam.theme', next); } catch {}
+      });
+      function applyTheme(mode) {
+        root.classList.toggle('theme-light', mode === 'light');
+        themeLabel.textContent = mode === 'light' ? 'Light' : 'Dark';
+        themeIcon.firstElementChild?.setAttribute('href', mode === 'light' ? '#ico-sun' : '#ico-moon');
+      }
+
+      // Layout
+      const sidebar = document.getElementById('sidebar');
+      const control = document.getElementById('control');
+
+      // Sidebar buttons
+      const sbStart = document.getElementById('sbStart');
+      const sbStop = document.getElementById('sbStop');
+      const sbCapStart = document.getElementById('sbCapStart');
+      const sbCapStop = document.getElementById('sbCapStop');
+      const sbCapDownload = document.getElementById('sbCapDownload');
+      const sbCapClear = document.getElementById('sbCapClear');
+      const sbSave = document.getElementById('sbSave');
+      const sbLoad = document.getElementById('sbLoad');
+      const sbClear = document.getElementById('sbClear');
+      const sbClearLogs = document.getElementById('sbClearLogs');
+      const sbToggleDebug = document.getElementById('sbToggleDebug');
+      const sbToggleAutoScroll = document.getElementById('sbToggleAutoScroll');
+
+      // Inputs
+      const host       = document.getElementById('host');
+      const port       = document.getElementById('port');
+      const ssl        = document.getElementById('ssl');
+      const accessKey  = document.getElementById('accessKey');
+      const btnShowKey = document.getElementById('btnShowKey');
+      const codecHint  = document.getElementById('codecHint');
+      const srvTimeout = document.getElementById('srvTimeout');
+      const bufferMode = document.getElementById('bufferMode');
+      const windowMin  = document.getElementById('windowMinutes');
+      const debug      = document.getElementById('debug');
+      const persistKey = document.getElementById('persistKey');
+      const logLimit   = document.getElementById('logLimit');
+
+      const capMaxMB   = document.getElementById('capMaxMB');
+      const capFile    = document.getElementById('capFile');
+      const capMime    = document.getElementById('capMime');
+
+      const autoScroll = document.getElementById('autoScroll');
+      const logEl      = document.getElementById('log');
+      const video      = document.getElementById('video');
+
+      // State
+      const logs = [];
+      let player = null;
+      let ui = loadUi() || { sidebarCollapsed:false, panelOpen:true };
+
+      // ----- UI helpers -----
+      function loadUi(){ try { return JSON.parse(localStorage.getItem(UI_KEY) || ''); } catch { return null; } }
+      function saveUi(){ try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch {} }
+      function setMenuCollapsed(collapsed){
+        ui.sidebarCollapsed = !!collapsed; saveUi();
+        sidebar.classList.toggle('collapsed', ui.sidebarCollapsed);
+        btnToggleMenu.setAttribute('aria-expanded', (!ui.sidebarCollapsed).toString());
+      }
+      function setPanelOpen(open){
+        ui.panelOpen = !!open; saveUi();
+        control.classList.toggle('expanded', ui.panelOpen);
+        control.classList.toggle('collapsed', !ui.panelOpen);
+        control.setAttribute('aria-hidden', ui.panelOpen ? 'false' : 'true');
+        btnTogglePanel.setAttribute('aria-expanded', ui.panelOpen ? 'true' : 'false');
+      }
+
+      // Show/Hide key
+      btnShowKey.addEventListener('click', ()=>{
+        const isPwd = accessKey.type === 'password';
+        accessKey.type = isPwd ? 'text' : 'password';
+        btnShowKey.textContent = isPwd ? 'Hide' : 'Show';
+        btnShowKey.setAttribute('aria-pressed', (!isPwd).toString());
+      });
+
+      // Init UI
+      setMenuCollapsed(!!ui.sidebarCollapsed);
+      setPanelOpen(!!ui.panelOpen);
+
+      // Logs
+      function renderLogs(newLine=false){
+        logEl.textContent = logs.join('\n');
+        if (!autoScroll.checked) return;
+        const nearBottom = (logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight) < 40;
+        if (nearBottom || newLine) logEl.scrollTop = logEl.scrollHeight;
+      }
+      function clearLogs(){ logs.length = 0; renderLogs(); }
+
+      // ----- REC badge timer / stats -----
+      let recTimerId = null;
+      function fmtTime(sec) {
+        sec = Math.floor(sec);
+        const s = (sec % 60).toString().padStart(2,'0');
+        const m = Math.floor(sec / 60) % 60;
+        const h = Math.floor(sec / 3600);
+        return h ? `${h}:${m.toString().padStart(2,'0')}:${s}` : `${m}:${s}`;
+      }
+      function fmtBytes(bytes) {
+        if (bytes < 1024) return bytes + 'B';
+        const kb = bytes / 1024;
+        if (kb < 1024) return kb.toFixed(1) + 'KB';
+        const mb = kb / 1024;
+        if (mb < 1024) return mb.toFixed(1) + 'MB';
+        const gb = mb / 1024;
+        return gb.toFixed(2) + 'GB';
+      }
+      function updateRecBadge() {
+        if (!player || typeof player.getCaptureStats !== 'function') return;
+        const st = player.getCaptureStats();
+        if (!st.recording) return;
+        recBadge.innerHTML = `<span class="dot"></span>REC&nbsp;${fmtTime(st.elapsedSec)}&nbsp;${fmtBytes(st.bytes)}`;
+      }
+      function setRec(on){
+        recBadge.classList.toggle('on', !!on);
+        recBadge.setAttribute('aria-hidden', (!on).toString());
+        if (on) {
+          if (recTimerId) clearInterval(recTimerId);
+          updateRecBadge();
+          recTimerId = setInterval(updateRecBadge, 1000);
+        } else {
+          if (recTimerId) clearInterval(recTimerId);
+          recTimerId = null;
+          recBadge.innerHTML = `<span class="dot"></span>REC`;
+        }
+      }
+
+      // Build player options
+      function getOpts(){
+        const limit = Math.max(1, parseInt(logLimit.value || '1000', 10));
+        return {
+          videoEl: video,
+          host: host.value.trim(),
+          port: parseInt(port.value || '8080', 10),
+          ssl: !!ssl.checked,
+          accessKeyB64: accessKey.value.trim(),
+          codecHint: codecHint.value.trim() || 'vp9',
+          serverTimeoutSec: Math.max(2, parseInt(srvTimeout.value || '60', 10)),
+          debug: !!debug.checked,
+          logBuffer: logs,
+          logBufferLimit: limit,
+          storageKey: 'tinycam.player.v1',
+          persistKey: !!persistKey.checked,
+          autoLoad: false,
+          autoSave: true,
+          bufferMode: bufferMode.value,
+          windowMinutes: Math.max(1, parseInt(windowMin.value || '5', 10)),
+          onStatus: (s)=>{ statusEl.textContent = s; },
+          onLog: (line)=>{ if (debug.checked){ logs.push(line); const over=logs.length - limit; if (over>0) logs.splice(0, over); renderLogs(true);} },
+          onError: (e)=>{ console.error(e); },
+        };
+      }
+      function applyFormToPlayer(p){
+        if (!p) return;
+        p.host = host.value.trim();
+        p.port = parseInt(port.value || '8080', 10);
+        p.ssl  = !!ssl.checked;
+        p.accessKeyB64 = accessKey.value.trim();
+        p.codecHint = codecHint.value.trim() || 'vp9';
+        p.serverTimeoutSec = Math.max(2, parseInt(srvTimeout.value || '60', 10));
+        p.setDebug(!!debug.checked);
+        p.logBufferLimit = Math.max(1, parseInt(logLimit.value || '1000', 10));
+        p.persistKey = !!persistKey.checked;
+        p.setBufferMode(bufferMode.value, Math.max(1, parseInt(windowMin.value || '5', 10)));
+      }
+      function syncFormFromConfig(cfg){
+        if (!cfg) return;
+        if (typeof cfg.host==='string') host.value = cfg.host;
+        if (typeof cfg.port==='number') port.value = cfg.port;
+        if (typeof cfg.ssl==='boolean') ssl.checked = cfg.ssl;
+        if (typeof cfg.codecHint==='string') codecHint.value = cfg.codecHint;
+        if (typeof cfg.serverTimeoutSec==='number') srvTimeout.value = cfg.serverTimeoutSec;
+        if (typeof cfg.debug==='boolean') debug.checked = cfg.debug;
+        if (typeof cfg.bufferMode==='string') bufferMode.value = (cfg.bufferMode==='window'?'window':'grow');
+        if (typeof cfg.windowMinutes==='number') windowMin.value = cfg.windowMinutes;
+        if (typeof cfg.accessKeyB64==='string' && persistKey.checked) accessKey.value = cfg.accessKeyB64;
+      }
+
+      // ===== Actions =====
+      sbStart.addEventListener('click', async ()=>{
+        if (!player){ player = new TinyCamPlayer(getOpts()); }
+        else { applyFormToPlayer(player); }
+        clearLogs();
+        try { await player.start(); }
+        catch (e){ console.error(e); alert('Start error: ' + (e.message || e)); }
+      });
+
+      sbStop.addEventListener('click', async ()=>{
+        if (!player) return;
+        if (player.recording) { try { await player.stopCapture(); } catch {} setRec(false); }
+        player.stop();
+      });
+
+      sbCapStart.addEventListener('click', ()=>{
+        if (!player) return alert('Start the player first.');
+        const maxMB = Math.max(1, parseInt(capMaxMB.value || '300', 10));
+        const maxBytes = maxMB * 1024 * 1024;
+        const mime = capMime.value.trim() || undefined;
+        player.startCapture({ maxBytes, mime, mode: 'mediarec' });
+        setRec(true);
+      });
+
+      sbCapStop.addEventListener('click', async ()=>{
+        if (!player) return;
+        await player.stopCapture();
+        setRec(false);
+      });
+
+      sbCapDownload.addEventListener('click', async ()=>{
+        if (!player) return;
+        const name = (capFile.value || 'tinycam.webm').trim();
+        await player.downloadCapture(name);
+      });
+
+      sbCapClear.addEventListener('click', ()=>{
+        if (!player) return;
+        player.clearCapture();
+        if (!player.recording) setRec(false);
+      });
+
+      sbSave.addEventListener('click', ()=>{
+        if (!player) player = new TinyCamPlayer(getOpts());
+        else applyFormToPlayer(player);
+        try { player.saveConfig({ includeKey: !!persistKey.checked }); alert('Saved.'); }
+        catch(e){ alert('Save failed: ' + (e.message || e)); }
+      });
+
+      sbLoad.addEventListener('click', ()=>{
+        if (!player) player = new TinyCamPlayer(getOpts());
+        const cfg = player.loadConfig();
+        syncFormFromConfig(cfg);
+        applyFormToPlayer(player);
+      });
+
+      sbClear.addEventListener('click', ()=>{
+        if (!player) player = new TinyCamPlayer(getOpts());
+        player.clearConfig(); alert('Cleared.');
+      });
+
+      sbClearLogs.addEventListener('click', ()=>{ logs.length = 0; renderLogs(); });
+
+      sbToggleDebug.addEventListener('click', ()=>{
+        debug.checked = !debug.checked;
+        if (player) player.setDebug(!!debug.checked);
+      });
+
+      sbToggleAutoScroll.addEventListener('click', ()=>{
+        autoScroll.checked = !autoScroll.checked;
+      });
+
+      // Live reactions
+      bufferMode.addEventListener('change', ()=>{ if (player) player.setBufferMode(bufferMode.value, parseInt(windowMin.value||'5',10)); });
+      windowMin.addEventListener('change', ()=>{ if (player) player.setWindowMinutes(parseInt(windowMin.value||'5',10)); });
+
+      // Top toggles
+      btnToggleMenu.addEventListener('click', ()=> setMenuCollapsed(!ui.sidebarCollapsed));
+      btnTogglePanel.addEventListener('click', ()=> setPanelOpen(!ui.panelOpen));
+    })();
+  </script>
+</body>
+</html>

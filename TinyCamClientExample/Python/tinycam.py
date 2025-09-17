@@ -199,9 +199,8 @@ class TinyCamClient:
                 self.log.debug("[health] watchdog end: %s", e)
                 break
 
-
     # ───────── Streaming ─────────
-    async def iter_plain_chunks(self) -> AsyncIterator[bytes]:
+    async def get_chunks(self) -> AsyncIterator[bytes]:
 
         if(self.use_ssl):
             sslctx = ssl.create_default_context()
@@ -212,7 +211,6 @@ class TinyCamClient:
 
         access_key = safe_b64decode(self.keys.access_key_b64)
 
-        # 1) token/exp/cnonce
         exp = int(time.time()) + 60
         token = hmac_b64(f"stream:{exp}", self.keys.access_key_b64)
         client_nonce = os.urandom(16)
@@ -230,7 +228,6 @@ class TinyCamClient:
             open_timeout=self.ws_timeout,
             ssl=sslctx,
         ) as ws:
-            # 2) server → client: hello (timeout)
             try:
                 hello_msg = await asyncio.wait_for(ws.recv(), timeout=self.ws_timeout)
             except asyncio.TimeoutError:
@@ -320,12 +317,13 @@ class TinyCamClient:
                     except Exception:
                         pass
 
+    # ───────── Save streaming data ─────────
     async def stream_to_file(self, out_path: Optional[str] = None) -> None:
         target = out_path or self.out_path
         total = 0
         self.log.info("[write] %s", target)
         with open(target, "wb") as f:
-            async for chunk in self.iter_plain_chunks():
+            async for chunk in self.get_chunks():
                 f.write(chunk)
                 total += len(chunk)
                 self.log.debug("[sink] total=%.2f MB", total / (1024 * 1024))
@@ -380,7 +378,6 @@ async def main_async(args):
         await asyncio.sleep(min(backoff, 10.0))
         backoff = min(backoff * 2.0, 10.0)
 
-
 def parse_args():
     p = argparse.ArgumentParser(description="TinyCam secure streaming client")
     p.add_argument(
@@ -405,8 +402,7 @@ def parse_args():
         help="Output file path for the decrypted recording (default: %(default)s).")
     
     p.add_argument(
-        "--timeout", default=60, help="Websocket health check timeout  (default: %(default)s)."
-    )
+        "--timeout", default=60, help="Websocket health check timeout  (default: %(default)s).")
 
     p.add_argument(
         "--device", action="store_true",
@@ -447,7 +443,7 @@ def main():
 if __name__ == "__main__":
     """
     [ SAMPLE COMMAND TO TEST ]
-    python stream_downloader.py --host 127.0.0.1 --port 8080 --ssl --keys keys.json 
+    python tinycam.py --host 127.0.0.1 --port 8080 --ssl --keys keys.json 
     """
     
     main()

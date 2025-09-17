@@ -417,6 +417,10 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# Remove backup files
+*.bak
+*.log
+
 # Remove environment & keyfile
 **/keys.json
 **/env
