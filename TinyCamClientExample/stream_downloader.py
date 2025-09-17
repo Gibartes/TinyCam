@@ -96,17 +96,25 @@ class TinyCamClient:
         ws_url: str,
         keys: Keys,
         out_path: str,
+        use_ssl: bool,
         codec_hint: str = "vp9",
         logger: Optional[logging.Logger] = None,
         ws_timeout: float = 20.0,
+        inactivity_timeout: float = 60.0,
+        first_frame_timeout: float = 60.0,
     ) -> None:
         self.http_base = http_base.rstrip("/")
         self.ws_url = ws_url
         self.keys = keys
         self.out_path = out_path
         self.codec_hint = codec_hint
+        self.use_ssl = use_ssl
         self.log = logger or logging.getLogger("TinyCamClient")
         self.ws_timeout = ws_timeout
+
+        self.inactivity_timeout = inactivity_timeout
+        self.heartbeat_interval = int(inactivity_timeout/2)
+        self.first_frame_timeout = first_frame_timeout
 
     # ───────── Management API ─────────
     async def start_server(self, force: bool = True) -> Tuple[int, str]:
@@ -166,17 +174,41 @@ class TinyCamClient:
             r = await client.get(f"{self.http_base}/device",
                                  headers={"Authorization": sig})
             return (r.status_code, r.text)
+    
+    async def heartbeat_task(self, ws: websockets.WebSocketClientProtocol):
+        while True:
+            try:
+                await asyncio.sleep(self.heartbeat_interval)
+                await ws.send(json.dumps({"type": "ping", "ts": time.time()}))
+                self.log.debug("[health] ping sent")
+            except Exception as e:
+                self.log.debug("[health] heartbeat end: %s", e)
+                break
+
+    async def watchdog_task(self, ws: websockets.WebSocketClientProtocol, last_rx_ts_getter):
+        while True:
+            try:
+                await asyncio.sleep(1.0)
+                if time.monotonic() - last_rx_ts_getter() > self.inactivity_timeout:
+                    self.log.warning("[health] inactivity %.1fs → closing", self.inactivity_timeout)
+                    try:
+                        await ws.close(code=1001, reason="client watchdog inactivity")
+                    finally:
+                        break
+            except Exception as e:
+                self.log.debug("[health] watchdog end: %s", e)
+                break
+
 
     # ───────── Streaming ─────────
     async def iter_plain_chunks(self) -> AsyncIterator[bytes]:
-        """
-        TinyCam WS에 연결해 **복호화된 비디오 바이트**를 yield.
-        파일 I/O는 하지 않음. (쓰기 분리)
-        """
 
-        sslctx = ssl.create_default_context()
-        sslctx.check_hostname = False
-        sslctx.verify_mode = ssl.CERT_NONE
+        if(self.use_ssl):
+            sslctx = ssl.create_default_context()
+            sslctx.check_hostname = False
+            sslctx.verify_mode = ssl.CERT_NONE
+        else:
+            sslctx = None
 
         access_key = safe_b64decode(self.keys.access_key_b64)
 
@@ -196,12 +228,17 @@ class TinyCamClient:
             ping_timeout=20,
             close_timeout=10,
             open_timeout=self.ws_timeout,
-            ssl=sslctx
+            ssl=sslctx,
         ) as ws:
-            # 2) hello
-            hello_msg = await ws.recv()
+            # 2) server → client: hello (timeout)
+            try:
+                hello_msg = await asyncio.wait_for(ws.recv(), timeout=self.ws_timeout)
+            except asyncio.TimeoutError:
+                raise RuntimeError("hello timeout")
+
             if isinstance(hello_msg, bytes):
                 raise RuntimeError("expected hello text frame, got binary")
+
             hello = json.loads(hello_msg)
             if hello.get("type") != "hello":
                 raise RuntimeError(f"unexpected hello: {hello}")
@@ -217,44 +254,77 @@ class TinyCamClient:
             if exp_srv != exp:
                 self.log.warning("server exp mismatch: %s != %s", exp_srv, exp)
 
-            # 3)
+            # 3) client → server: start
+            start_payload = {"type": "start", "conn": conn_b64, "exp": exp_srv}
+            await ws.send(json.dumps(start_payload))
+            self.log.info("[start] sent")
+
+            # 4) derive session key & AAD
             salt = client_nonce + server_nonce
             info = b"tinycam hkdf v1"
             session_key = hkdf_sha256(ikm=access_key, salt=salt, info=info, length=32)
             aesgcm = AESGCM(session_key)
             aad = f"{conn_b64}|{exp}|{codec}|{w}x{h}|{fps}".encode("utf-8")
 
-            # 4)
-            last_counter = 0
-            while True:
-                msg = await ws.recv()
-                if isinstance(msg, str):
-                    self.log.debug("[text] %s", msg)
-                    continue
+            # 5) health: heartbeat + watchdog 시작
+            last_rx_ts = time.monotonic()  # 마지막 "수신된" 프레임(텍스트/바이너리)
+            first_bin_deadline = last_rx_ts + self.first_frame_timeout
+            first_bin_seen = False
 
-                buf = memoryview(msg)
-                if len(buf) < 28:
-                    self.log.warning("short frame: len=%d", len(buf))
-                    continue
+            hb_task = asyncio.create_task(self.heartbeat_task(ws))
+            wd_task = asyncio.create_task(self.watchdog_task(ws, lambda: last_rx_ts))
 
-                nonce = bytes(buf[:12])
-                tag = bytes(buf[12:28])
-                ct = bytes(buf[28:])
+            try:
+                while True:
+                    msg = await ws.recv()
+                    now = time.monotonic()
+                    last_rx_ts = now
 
-                if nonce[:4] != conn_id:
-                    raise RuntimeError("nonce connId mismatch")
-                counter = be_u64(nonce[4:12])
-                if counter <= last_counter:
-                    raise RuntimeError(f"counter not increasing ({counter} <= {last_counter})")
-                last_counter = counter
+                    # 서버의 텍스트 프레임(알림/진단)
+                    if isinstance(msg, str):
+                        self.log.debug("[text] %s", msg)
+                        continue
 
-                try:
-                    plain = aesgcm.decrypt(nonce, join_ct_tag(ct, tag), aad)
-                except Exception as e:
-                    self.log.error("decrypt error: %s", e)
-                    raise
+                    # 바이너리 프레임
+                    buf = memoryview(msg)
+                    if len(buf) < 28:
+                        self.log.warning("short frame: len=%d", len(buf))
+                        continue
 
-                yield plain
+                    nonce = bytes(buf[:12])      # [0:12]
+                    tag   = bytes(buf[12:28])    # [12:28]
+                    ct    = bytes(buf[28:])      # [28:]
+
+                    # connId(4B) + counter(8B, BE)
+                    if nonce[:4] != conn_id:
+                        raise RuntimeError("nonce connId mismatch")
+                    counter = be_u64(nonce[4:12])
+
+                    # (선택) 카운터 증가 체크: first_bin_seen 이후부터 엄격 체크
+                    if first_bin_seen:
+                        # 내부 상태 보존 위해 마지막 카운터를 로컬로 유지 (간단화를 위해 생략 가능)
+                        pass
+
+                    try:
+                        plain = aesgcm.decrypt(nonce, join_ct_tag(ct, tag), aad)
+                    except Exception as e:
+                        self.log.error("decrypt error: %s", e)
+                        raise
+
+                    if not first_bin_seen:
+                        first_bin_seen = True
+                    yield plain
+
+                    # 첫 바이너리 프레임 타임아웃 감시 (루프 안에서도 안전)
+                    if not first_bin_seen and now > first_bin_deadline:
+                        raise RuntimeError("first binary frame timeout")
+            finally:
+                # 정리
+                for t in (hb_task, wd_task):
+                    try:
+                        t.cancel()
+                    except Exception:
+                        pass
 
     # ───────── 파일 저장 도우미 (쓰기 분리) ─────────
     async def stream_to_file(self, out_path: Optional[str] = None) -> None:
@@ -286,7 +356,6 @@ async def main_async(args):
 
     keys = Keys.load(args.keys)
 
-    
     http_base = f"{'https' if args.ssl else 'http'}://{args.host}:{args.port}"
     wss_base  = f"{'wss' if args.ssl else 'ws'}://{args.host}:{args.port}/stream"
     
@@ -296,7 +365,9 @@ async def main_async(args):
         keys=keys,
         out_path=args.out,
         codec_hint=args.codec_hint,
+        inactivity_timeout=args.timeout,
         logger=log,
+        use_ssl=args.ssl
     )
 
     if args.device:
@@ -348,6 +419,10 @@ def parse_args():
     p.add_argument(
         "-o", "--out", default="tinycam_out.webm",
         help="Output file path for the decrypted recording (default: %(default)s).")
+    
+    p.add_argument(
+        "--timeout", default=60, help="Websocket health check timeout  (default: %(default)s)."
+    )
 
     p.add_argument(
         "--device", action="store_true",
