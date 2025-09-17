@@ -267,7 +267,7 @@ class TinyCamClient:
             aad = f"{conn_b64}|{exp}|{codec}|{w}x{h}|{fps}".encode("utf-8")
 
             # 5) health: heartbeat + watchdog 시작
-            last_rx_ts = time.monotonic()  # 마지막 "수신된" 프레임(텍스트/바이너리)
+            last_rx_ts = time.monotonic()
             first_bin_deadline = last_rx_ts + self.first_frame_timeout
             first_bin_seen = False
 
@@ -280,12 +280,10 @@ class TinyCamClient:
                     now = time.monotonic()
                     last_rx_ts = now
 
-                    # 서버의 텍스트 프레임(알림/진단)
                     if isinstance(msg, str):
                         self.log.debug("[text] %s", msg)
                         continue
 
-                    # 바이너리 프레임
                     buf = memoryview(msg)
                     if len(buf) < 28:
                         self.log.warning("short frame: len=%d", len(buf))
@@ -300,9 +298,7 @@ class TinyCamClient:
                         raise RuntimeError("nonce connId mismatch")
                     counter = be_u64(nonce[4:12])
 
-                    # (선택) 카운터 증가 체크: first_bin_seen 이후부터 엄격 체크
                     if first_bin_seen:
-                        # 내부 상태 보존 위해 마지막 카운터를 로컬로 유지 (간단화를 위해 생략 가능)
                         pass
 
                     try:
@@ -315,22 +311,16 @@ class TinyCamClient:
                         first_bin_seen = True
                     yield plain
 
-                    # 첫 바이너리 프레임 타임아웃 감시 (루프 안에서도 안전)
                     if not first_bin_seen and now > first_bin_deadline:
                         raise RuntimeError("first binary frame timeout")
             finally:
-                # 정리
                 for t in (hb_task, wd_task):
                     try:
                         t.cancel()
                     except Exception:
                         pass
 
-    # ───────── 파일 저장 도우미 (쓰기 분리) ─────────
     async def stream_to_file(self, out_path: Optional[str] = None) -> None:
-        """
-        iter_plain_chunks()를 사용하여 파일에 저장.
-        """
         target = out_path or self.out_path
         total = 0
         self.log.info("[write] %s", target)
@@ -340,11 +330,6 @@ class TinyCamClient:
                 total += len(chunk)
                 self.log.debug("[sink] total=%.2f MB", total / (1024 * 1024))
         self.log.info("[done] bytes=%d", total)
-
-    # (선택) 하위호환: 이전 이름 유지
-    async def stream_once(self) -> None:
-        await self.stream_to_file(self.out_path)
-
 
 # ──────────────────────────────── Execution Unit ────────────────────────────────
 async def main_async(args):
@@ -386,7 +371,6 @@ async def main_async(args):
     backoff = 1.0
     while True:
         try:
-            # 파일 저장 모드
             await client.stream_to_file(args.out)
             backoff = 1.0
         except (websockets.ConnectionClosed, websockets.InvalidStatusCode) as e:
