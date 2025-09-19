@@ -12,7 +12,27 @@ namespace TinyCam.Endpoints;
 
 public static class StreamEndpoints
 {
+        public static bool TryDecodeUrl(string? s, out byte[] bytes)
+        {
+            bytes = Array.Empty<byte>();
+            if (string.IsNullOrWhiteSpace(s)) return false;
 
+            // 쿼리에서 '+'가 공백으로 오는 경우 보정
+            s = s.Trim().Replace(' ', '+');
+
+            // base64url → 표준 Base64
+            s = s.Replace('-', '+').Replace('_', '/');
+
+            // 패딩 보정
+            int mod = s.Length % 4;
+            if (mod == 2) s += "==";
+            else if (mod == 3) s += "=";
+            else if (mod == 1) return false;
+
+            try { bytes = Convert.FromBase64String(s); return true; }
+            catch { return false; }
+        }
+    
     public static void MapStreamEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/stream", async (HttpContext ctx, FFmpegMuxer mux, KeyStore ks, TinyCamConfig conf, ILoggerFactory lf, IHostApplicationLifetime life) =>
@@ -22,12 +42,12 @@ public static class StreamEndpoints
             var expStr = ctx.Request.Query["exp"].ToString();
             var cnonce64 = ctx.Request.Query["cnonce"].ToString(); // 16B base64
             if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(expStr) || string.IsNullOrWhiteSpace(cnonce64))
-                return Results.Unauthorized();
-            if (!long.TryParse(expStr, out var exp)) return Results.Unauthorized();
+                return Results.BadRequest("empty string");
+            if (!long.TryParse(expStr, out var exp)) return Results.BadRequest();
 
             var msg = $"stream:{exp}";
             if (!Auth.VerifyHmac(msg, token, ks.AccessKey)) return Results.Unauthorized();
-            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() > exp) return Results.Unauthorized();
+            if (DateTimeOffset.UtcNow.ToUnixTimeSeconds() > exp) return Results.BadRequest();
 
             var log = lf.CreateLogger("Stream");
             Task? sender = null;
@@ -46,11 +66,12 @@ public static class StreamEndpoints
                 AllowSynchronousContinuations = false
             });
 
- 
             // ── Session Key(HKDF) + AAD ────────────────────────────────────────────
             byte[] clientNonce;
-            try { clientNonce = Convert.FromBase64String(cnonce64); } catch { return Results.Unauthorized(); }
-            if (clientNonce.Length != 16) return Results.Unauthorized();
+            if (!Auth.TryB64OrB64UrlDecode(cnonce64, out clientNonce) || clientNonce.Length != 16)
+            {
+                return Results.UnprocessableEntity();
+            }
 
             using var ws = await ctx.WebSockets.AcceptWebSocketAsync();
 

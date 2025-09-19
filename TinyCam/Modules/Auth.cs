@@ -7,7 +7,7 @@ namespace TinyCam.Modules;
 public static class Auth
 {
     // ---------------- HMAC (Authenticate Management Token) ----------------
-    private static bool TryB64OrB64UrlDecode(string s, out byte[] bytes)
+    public static bool TryB64OrB64UrlDecode(string s, out byte[] bytes)
     {
         bytes = Array.Empty<byte>();
         if (string.IsNullOrWhiteSpace(s)) return false;
