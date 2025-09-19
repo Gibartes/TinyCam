@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.WebUtilities;
+using TinyCam.Data;
+using TinyCam.Models;
 
 namespace TinyCam.Modules;
 
@@ -59,6 +61,7 @@ public static class Auth
         {
             var sig = ctx.Request.Headers["Authorization"].ToString();
             if (string.IsNullOrEmpty(sig)) return (false, null);
+
             using var sr = new StreamReader(ctx.Request.Body, Encoding.UTF8, leaveOpen: true);
             var body = await sr.ReadToEndAsync();
             return (VerifyHmac(body, sig, keyB64), body);
@@ -66,6 +69,29 @@ public static class Auth
         catch{
             return (false, null);
         }
+    }
+
+    public static bool VerifyHmac(HttpContext ctx, string keyB64, string? body)
+    {
+        try
+        {
+            if (body == null) return false;
+            var sig = ctx.Request.Headers["Authorization"].ToString();
+            if (string.IsNullOrEmpty(sig)) return false;
+            return VerifyHmac(body, sig, keyB64);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static async Task<(bool, string?)> VerifyHmacUserAsync(HttpContext ctx, TinyCamConfig liveCfg, KeyStore ks)
+    {
+        var result = await VerifyHmacAsync(ctx, ks.ManagementKey);
+        if (result.Item1) return (result.Item1, result.Item2);
+        if (!liveCfg.AllowForStreamUser) return (false, result.Item2);
+        return (VerifyHmac(ctx, ks.AccessKey, result.Item2), result.Item2);
     }
 
     // ---------------- HKDF-SHA256 (Generate Session Key) ----------------

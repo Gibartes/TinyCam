@@ -30,6 +30,7 @@ public class KeyStore
     public void RotateAccessKey(string newKeyB64)
     {
         if (string.IsNullOrWhiteSpace(newKeyB64)) throw new ArgumentException("empty key");
+        if(newKeyB64.Length < 16) throw new ArgumentException("weak key");
         AccessKey = newKeyB64;
         Save();
     }

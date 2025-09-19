@@ -66,7 +66,10 @@ public static class ConfigHelpers
         dst.RetainSafeWindowSeconds = src.RetainSafeWindowSeconds;
         dst.RetainFilePrefix = src.RetainFilePrefix;
 
-        // SSL Settings does not changed while server alive.
+        // SSL Settings and process guardian does not changed while server alive.
+
+        dst.EnableDownload     = src.EnableDownload;
+        dst.AllowForStreamUser = src.AllowForStreamUser;
 
         void CopyOpt(string name)
         {

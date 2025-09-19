@@ -331,9 +331,8 @@ public class FFmpegMuxer
         {
             if (pipeFmt == "webm")
             {
-                args = argsCommon +
-                       $"-f webm -live 1 -cluster_time_limit {_cfg.ClusterTimeLimitMs} " +
-                       $"-cluster_size_limit {_cfg.ClusterSizeLimitBytes} -";
+                args = argsCommon + 
+                       $"-f webm -live 1 -cluster_time_limit {_cfg.ClusterTimeLimitMs} -cluster_size_limit {_cfg.ClusterSizeLimitBytes} -fflags +genpts -";
             }
             else if (pipeFmt == "mp4")
             {

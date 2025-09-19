@@ -86,7 +86,6 @@ public class TinyCamConfig
     public bool UseJobObjectKillOnClose { get; set; } = true; // Windows only
     public bool UnixKillProcessGroup { get; set; } = true;    // Linux/macOS
     public bool UseSetSidOnUnix { get; set; } = true;         // Linux/macOS
-
     public string[] SetSidCandidates { get; set; } = new[] { "/usr/bin/setsid", "/bin/setsid" };
 
 
@@ -109,6 +108,11 @@ public class TinyCamConfig
 
     public int ChannelCapacity { get; set; } = 256;
     public int ChannelTimeout { get; set; } = 60;
+
+    // Allow to download video files
+    public bool EnableDownload { get; set; } = false;
+    public bool AllowForStreamUser { get; set; } = false;
+
 
     public static TinyCamConfig Load(string path, KeyStore ks)
     {

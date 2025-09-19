@@ -117,11 +117,11 @@ class TinyCamClient:
         self.first_frame_timeout = first_frame_timeout
 
     # ───────── Management API ─────────
-    async def start_server(self, force: bool = True) -> Tuple[int, str]:
+    async def start_server(self) -> Tuple[int, str]:
         if not self.keys.management_key_b64:
             self.log.warning("managementKey not set; skip /start")
             return (0, "skip")
-        body = {"force": bool(force), "ts":gen_ts()}
+        body = {"ts":gen_ts()}
         sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0) as client:
             r = await client.post(
@@ -132,11 +132,11 @@ class TinyCamClient:
             self.log.info("[/start] %s %s", r.status_code, r.text)
             return (r.status_code, r.text)
     
-    async def stop_server(self, force: bool = True) -> Tuple[int, str]:
+    async def stop_server(self) -> Tuple[int, str]:
         if not self.keys.management_key_b64:
             self.log.warning("managementKey not set; skip /stop")
             return (0, "skip")
-        body = {"force": bool(force), "ts":gen_ts()}
+        body = {"ts":gen_ts()}
         sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
             r = await client.post(
@@ -151,7 +151,7 @@ class TinyCamClient:
         if not self.keys.management_key_b64:
             self.log.warning("managementKey not set; skip /apply-config")
             return (0, "skip")
-        sig = hmac_b64(json.dumps({"force": True, "ts":gen_ts()}), self.keys.management_key_b64)
+        sig = hmac_b64(json.dumps({"ts":gen_ts()}), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
             try:
                 r = await client.post(
@@ -165,16 +165,86 @@ class TinyCamClient:
                 self.log.error("POST /apply-config error: %s", e)
                 return (0, str(e))
 
-    async def get_devices(self):
+    async def get_devices(self) -> Tuple[int, str]:
         if not self.keys.management_key_b64:
             self.log.warning("managementKey not set; skip /device")
             return (0, "skip")
-        sig = hmac_b64("", self.keys.management_key_b64)
+        body = {"ts":gen_ts()}
+        sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
         async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
-            r = await client.get(f"{self.http_base}/device",
-                                 headers={"Authorization": sig})
+            r = await client.post(f"{self.http_base}/device",
+                                 headers={"Authorization": sig},
+                                 content=json.dumps(body))
+            return (r.status_code, r.text)
+
+    async def get_file_entry(self) -> Tuple[int, str]:
+        if not self.keys.management_key_b64:
+            self.log.warning("managementKey not set; skip /start")
+            return (0, "skip")
+        body = {"ts":gen_ts()}
+        sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.post(
+                f"{self.http_base}/file/list",
+                headers={"Authorization": sig, "Content-Type": "application/json"},
+                content=json.dumps(body),
+            )
+            self.log.info("[/start] %s %s", r.status_code, r.text)
             return (r.status_code, r.text)
     
+    async def get_file(self, remote, local_prefix, attachment:bool=True, chunk_size:int=1024*1024, resume: bool = True) -> Tuple[int, str]:
+        if not self.keys.management_key_b64:
+            self.log.warning("managementKey not set; skip /start")
+            return (0, "skip")
+        
+        target = f"{local_prefix}{os.sep}{remote}"
+
+        start = 0
+        if resume and os.path.exists(target):
+            start = os.path.getsize(target)
+        
+        body = {"name": remote, "attachment": bool(attachment), "ts": gen_ts()}
+        sig = hmac_b64(json.dumps(body), self.keys.management_key_b64)
+
+        url = f"{self.http_base}/file/download"
+        headers = {
+            "Authorization": sig,
+            "Content-Type": "application/json",
+            "Accept": "application/octet-stream",
+        }
+        if start > 0:headers["Range"] = f"bytes={start}-"
+
+        async with httpx.AsyncClient(timeout=None) as client:
+            r = await client.post(url, headers=headers, content=json.dumps(body))
+            status = r.status_code
+
+            if status in (401, 403, 404):
+                return (status, r.text)
+            if status in (304,):
+                return (status, "not modified")
+
+            if status not in (200, 206):
+                return (status, r.text)
+
+            mode = "ab" if (resume and start > 0 and status == 206) else "wb"
+            received = 0
+            with open(target, mode) as f:
+                async for chunk in r.aiter_bytes(chunk_size):
+                    if not chunk:
+                        continue
+                    f.write(chunk)
+                    received += len(chunk)
+            try:
+                cr = r.headers.get("content-range")
+                if cr and "/" in cr:
+                    total = int(cr.split("/")[-1])
+                    size = os.path.getsize(target)
+                    if self.log and size != total:
+                        self.log.warning("download size mismatch: %s != %s", size, total)
+            except Exception:
+                pass
+            return (status, os.path.abspath(target))
+
     async def heartbeat_task(self, ws: websockets.WebSocketClientProtocol):
         while True:
             try:
@@ -362,6 +432,12 @@ async def main_async(args):
     if args.stop:
         await client.stop_server(force=True)
         return
+    if args.list:
+        print(await client.get_file_entry())
+        return
+    if args.file:
+        print(await client.get_file(args.remote, args.local, resume=args.resume))
+        return
     if args.apply:
         await client.apply_config()
         return
@@ -407,7 +483,25 @@ def parse_args():
     p.add_argument(
         "--device", action="store_true",
         help="List available capture/compute devices on this host and exit.")
-
+    
+    p.add_argument(
+        "--list", action="store_true",
+        help="List of recorded files.")
+    
+    p.add_argument(
+        "--file", action="store_true",
+        help="Download a remote file.")
+    
+    p.add_argument(
+        "--remote", help="Remote file")
+    
+    p.add_argument(
+        "--local", help="Directory name to download file.")
+    
+    p.add_argument(
+        "--resume", action="store_true",
+        help="Resume downloaded file.")
+    
     p.add_argument(
         "--start", action="store_true",
         help="Call /start on the node before streaming (requires managementKey).")

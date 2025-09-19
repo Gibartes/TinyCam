@@ -82,11 +82,15 @@ LogRollDaily: false
 # To use HTTPS, first change the "Url" in appsettings.json to start with "https://". Then, add the certificate entry here.
 # Below is an example.
 certificateType: pfx        # pfx | pem
-pfxPath: C:\Utility\certs\tinycam_dev.pfx
+pfxPath: ""
 pemCertPath: ""
 pemKeyPath: ""
-password: yourpassword      # password of encrypted certificates
+password: ""      # password of encrypted certificates
 
-# ── Casting Option ───────────────────────────────────────────────────────
+# ── Broadcasting option ───────────────────────────────────────────────────────
 channelCapacity: 256
 channelTimeout: 60
+
+# ── File download option ───────────────────────────────────────────────────────
+enableDownload: true
+allowForStreamUser: false
