@@ -1,9 +1,5 @@
 ﻿using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Net.Http.Headers;
-using SQLitePCL;
-using System.IO;
-using System.Reflection.Metadata;
-using System.Text;
 using System.Text.Json;
 using TinyCam.Data;
 using TinyCam.Models;
@@ -44,10 +40,9 @@ public static class ManagementEndpoints
         app.MapPost("/device", async (HttpContext ctx, IDeviceTextEnumerator dev, TinyCamConfig liveCfg, KeyStore ks) =>
         {
             var (ok, body) = await Auth.VerifyHmacAsync(ctx, ks.ManagementKey);
-            if (!ok || body == null)
-                return Results.Unauthorized();
-            using var doc = JsonDocument.Parse(body);
-
+            if (!ok || body == null) return Results.Unauthorized();
+            var req = JsonSerializer.Deserialize<GeneralPostRequest>(body ?? "", jsonOpts);
+            if (req is null || !TimeCheck(req.ts)) return Results.Unauthorized();
             string kind = (ctx.Request.Query["kind"].ToString() ?? "all").ToLowerInvariant(); // video|audio|all
             string name = ctx.Request.Query["name"].ToString() ?? "";
             bool expand = ctx.Request.Query["expand"].ToString().Equals("true", StringComparison.OrdinalIgnoreCase);
@@ -62,8 +57,7 @@ public static class ManagementEndpoints
             try
             {
                 var (ok, body) = await Auth.VerifyHmacAsync(ctx, ks.ManagementKey);
-                if (!ok || body == null)
-                    return Results.Unauthorized();
+                if (!ok || body == null) return Results.Unauthorized();
                 var req = JsonSerializer.Deserialize<GeneralPostRequest>(body ?? "", jsonOpts);
                 if (req is null || !TimeCheck(req.ts)) return Results.Unauthorized();
                 await host.StartAsync();
@@ -93,7 +87,7 @@ public static class ManagementEndpoints
         });
 
         /* disable direct modification of configuration considering security options
-        app.MapPost("/apply", async (HttpContext ctx, MuxerHost host, TinyCamConfig liveCfg, KeyStore ks) =>
+        app.MapPost("/apply/config", async (HttpContext ctx, MuxerHost host, TinyCamConfig liveCfg, KeyStore ks) =>
         {
             try
             {
@@ -120,7 +114,7 @@ public static class ManagementEndpoints
         });
         */
 
-        app.MapPost("/apply-config", async (HttpContext ctx, MuxerHost host, TinyCamConfig liveCfg, KeyStore ks) =>
+        app.MapPost("/apply", async (HttpContext ctx, MuxerHost host, TinyCamConfig liveCfg, KeyStore ks) =>
         {
             try
             {
@@ -141,7 +135,7 @@ public static class ManagementEndpoints
             }
         });
 
-        app.MapPost("/update-key", async (HttpContext ctx, KeyStore ks) =>
+        app.MapPost("/update/key", async (HttpContext ctx, KeyStore ks) =>
         {
             try
             {

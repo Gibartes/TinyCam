@@ -155,7 +155,7 @@ class TinyCamClient:
         async with httpx.AsyncClient(timeout=10.0, verify=False) as client:
             try:
                 r = await client.post(
-                    f"{self.http_base}/apply-config",
+                    f"{self.http_base}/apply",
                     headers={"Authorization": sig, "Content-Type": "application/json"},
                     content=json.dumps({"force": True}),
                 )

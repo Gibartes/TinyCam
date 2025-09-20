@@ -20,9 +20,8 @@ public class KeyStore
         }
         else
         {
-            // Generate new keys (32 bytes each, base64)
-            ManagementKey = Convert.ToBase64String(RandomBytes(32));
-            AccessKey = Convert.ToBase64String(RandomBytes(32));
+            ManagementKey = GenerateRandomKey(32);
+            AccessKey = GenerateRandomKey(32);
             Save();
         }
     }
@@ -33,6 +32,20 @@ public class KeyStore
         if(newKeyB64.Length < 16) throw new ArgumentException("weak key");
         AccessKey = newKeyB64;
         Save();
+    }
+
+    public void RotateManagementKey(string newKeyB64)
+    {
+        if (string.IsNullOrWhiteSpace(newKeyB64)) throw new ArgumentException("empty key");
+        if (newKeyB64.Length < 16) throw new ArgumentException("weak key");
+        ManagementKey = newKeyB64;
+        Save();
+    }
+
+    public string GenerateRandomKey(int length)
+    {
+        if (length < 16) return "";
+        return Convert.ToBase64String(RandomBytes(length));
     }
 
     private void Save()
