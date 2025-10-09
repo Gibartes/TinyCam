@@ -142,6 +142,8 @@ TinyCam.exe
 The server runs by default at **[http://127.0.0.1:8080](http://127.0.0.1:8080)**.
 You can change the port in **appsettings.json**. After registering the certificate via **config.yaml** and updating the URL to **https**, HTTPS can be enabled. However, using **Nginx** is recommended by default.
 
+**Note** (MSI install): the default port is 28000 — i.e. http://127.0.0.1:28000
+
 ## Configuration (`appsettings.json`)
 Here's a README-friendly explanation you can place above your configuration examples:
 
