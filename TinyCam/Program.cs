@@ -6,14 +6,33 @@ using TinyCam.Platform;
 using TinyCam.Services;
 using TinyCam.Services.Devices;
 
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting.WindowsServices;
+
 var builder = WebApplication.CreateBuilder(args);
 
-var configPath = Environment.GetEnvironmentVariable("TINY_CAM_CONFIG") ?? "config.yaml";
-var keyPath    = Environment.GetEnvironmentVariable("TINY_CAM_KEYS") ?? "keys.json";
+var rootPath = "";
+if (Environment.GetEnvironmentVariable("TINY_CAM_CONFIG") != null)
+{
+    rootPath = Environment.GetEnvironmentVariable("TINY_CAM_CONFIG");
+}
+else {
+    rootPath = Path.GetDirectoryName(Environment.ProcessPath!);
+}
+
+var configPath = Path.Combine(rootPath ?? "", @"config.yaml");
+var keyPath    = Path.Combine(rootPath ?? "", @"keys.json");
+
 var ks         = new KeyStore(keyPath);
 var cfg        = TinyCamConfig.Load(configPath, ks);
 
 builder.Logging.ClearProviders();
+
+if (OperatingSystem.IsWindows() && WindowsServiceHelpers.IsWindowsService())
+{
+    builder.Host.UseWindowsService(o => o.ServiceName = "TinyCam");
+    builder.Host.UseContentRoot(AppContext.BaseDirectory);
+}
 
 SslConfigurator.ConfigureFromConfiguration(builder.WebHost, builder.Configuration, cfg);
 

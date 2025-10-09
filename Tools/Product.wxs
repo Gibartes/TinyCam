@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
+     xmlns:fw="http://wixtoolset.org/schemas/v4/wxs/firewall">
+
+  <Package Name="TinyCam" Manufacturer="Gibartes" Version="1.0.0"
+           UpgradeCode="D048FAB7-1E0F-84D9-AFC5-E7661DFF05B8"
+           InstallerVersion="500" Scope="perMachine" Compressed="yes" >
+    
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+    <!-- Program Files\TinyCam -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="TinyCam" />
+    </StandardDirectory>
+
+    <!-- ProgramData\TinyCam -->
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="TINY_CAM_DATA" Name="TinyCam" />
+    </StandardDirectory>
+
+    <ComponentGroup Id="TinyCamDataFolder" Directory="TINY_CAM_DATA">
+      <Component Id="TinyCamDataDir" Guid="{9B8B6C3A-04E1-4C3B-8A9C-7C7CCB0E9D41}">
+        <CreateFolder>
+          <util:PermissionEx
+              User="Users"
+              GenericRead="yes"
+              GenericWrite="yes"
+              GenericExecute="yes" />
+        </CreateFolder>
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="TinyCamCore" Directory="INSTALLFOLDER">
+      <Component Id="TinyCamCoreComponent" >
+        <File Id="TinyCamExe"    Source="$(var.PublishDir)\TinyCam.exe" KeyPath="yes" />
+        <File Id="FfmpegExe"     Source="$(var.PublishDir)\ffmpeg.exe" />
+        <File Id="WebConfig"     Source="$(var.PublishDir)\web.config" />
+        <File Id="DefaultKey"    Source="$(var.PublishDir)\keys.json" />
+        <File Id="CfgTinyCam"    Source="$(var.PublishDir)\config.yaml" />
+        <File Id="CfgAppSettings" Source="$(var.PublishDir)\appsettings.json" />
+        <File Id="Uninstall" Source="$(var.PublishDir)\uninstall.bat" />
+        <File Id="StaticWebassetsEndpoints" Source="$(var.PublishDir)\TinyCam.staticwebassets.endpoints.json" />
+
+        <ServiceInstall Id="TinyCamService" Name="TinyCam"
+                        DisplayName="TinyCam Service"
+                        Description="Encrypted WebSocket camera node"
+                        Start="auto" Type="ownProcess"
+                        ErrorControl="normal" Vital="yes"
+                        Arguments="--contentRoot &quot;[INSTALLFOLDER].&quot;" />
+        
+        <RegistryValue Id="TinyCamDelayedAuto"
+                       Root="HKLM"
+                       Key="SYSTEM\CurrentControlSet\Services\TinyCam"
+                       Name="DelayedAutostart"
+                       Type="integer"
+                       Value="1"
+                       Action="write" />
+
+        <util:ServiceConfig ServiceName="TinyCam"
+                            FirstFailureActionType="restart"
+                            SecondFailureActionType="restart"
+                            ThirdFailureActionType="restart"
+                            RestartServiceDelayInSeconds="600"
+                            ResetPeriodInDays="1" />
+
+        <fw:FirewallException Id="TinyCamTcp8444"
+                              Name="TinyCam TCP 8444"
+                              Program="[#TinyCamExe]"
+                              Port="8444"
+                              Protocol="tcp" />
+      </Component>
+    </ComponentGroup>
+
+    <Feature Id="MainFeature" Title="TinyCam" Level="1">
+      <ComponentGroupRef Id="TinyCamCore" />
+      <ComponentGroupRef Id="TinyCamDataFolder" />
+    </Feature>
+  </Package>
+</Wix>
